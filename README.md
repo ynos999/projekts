@@ -1,7 +1,7 @@
-# **SwiftHub: A Django-Based Project Management System**
+# ** A Django-Based Project Management System**
 
 - **Frontend**: HTML, CSS, JavaScript, AdminLTE3
-**SwiftHub** is a robust and flexible project management system built using Django and AdminLTE3. It is designed to enhance team collaboration, streamline task tracking, and simplify project progress monitoring. With its modern interface and rich features, **SwiftHub** caters to organizations, teams, and individuals aiming for efficient project workflows.
+**Project Management** is a robust and flexible project management system built using Django and AdminLTE3. It is designed to enhance team collaboration, streamline task tracking, and simplify project progress monitoring. With its modern interface and rich features, **Project Management** caters to organizations, teams, and individuals aiming for efficient project workflows.
 
 ---
 
@@ -10,13 +10,6 @@
 2. [Technologies Used](#technologies-used)
 3. [Installation](#installation)
 4. [Usage](#usage)
-5. [Project Structure](#project-structure)
-6. [Core Functionalities](#core-functionalities)
-7. [Screenshots](#screenshots)
-8. [Future Enhancements](#future-enhancements)
-9. [Contributing](#contributing)
-10. [License](#license)
-11. [Author](#author)
 
 ---
 
@@ -81,3 +74,27 @@
    ```
 
 ### **Project Structure**
+
+```
+Mifrate Server:
+
+python manage.py shell
+# Inside shell:
+from django.apps import apps
+print([app.label for app in apps.get_app_configs()])
+
+['admin', 'auth', 'contenttypes', 'sessions', 'messages', 'staticfiles', 'tempus_dominus', 'crispy_forms', 'crispy_bootstrap5', 'django_celery_beat', 'phonenumber_field', 'accounts', 'projects', 'tasks', 'notifications', 'teams', 'comments']
+```
+
+```
+Create fixturas:
+
+python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
+
+python manage.py shell -c "from django.contrib.contenttypes.models import ContentType; ContentType.objects.all().delete()"
+```
+
+   Load fixturas.json:
+   ```bash
+   python manage.py loaddata fixturas.json
+   ```
