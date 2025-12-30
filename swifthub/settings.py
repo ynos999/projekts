@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'django_celery_beat',
     'phonenumber_field',
+    'django_recaptcha',
 
     # custom apps
     'accounts',
@@ -172,6 +173,15 @@ LOGIN_URL = 'login'
 LOGOUT_URL = 'logout'
 LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = LOGIN_URL
+
+
+# projekti.test.lv keys
+RECAPTCHA_PUBLIC_KEY = 'YourKeyHere'
+RECAPTCHA_PRIVATE_KEY = 'YourKeyHere'
+
+RECAPTCHA_REQUIRED_SCORE = 0.6
+RECAPTCHA_USE_SSL = False
+RECAPTCHA_LANGUAGE = 'lv'
 
 
 # Default primary key field type

@@ -1,0 +1,85 @@
+version: "3.8"
+
+services:
+  postgresdb:
+    build:
+      context: ./docker/postgres
+      dockerfile: Dockerfile
+    container_name: projekti-postgresdb
+    labels:
+      - "postgresdb=true"
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_HOST: postgresdb
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PORT: 5432
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+    networks:
+      - projekti
+
+  web:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: projekti-web
+    restart: always
+    environment:
+      HOSTS: ${HOSTS}
+    depends_on:
+      - postgresdb
+    expose:
+      - "8000"
+    # ports:
+    #   - "8000:8000"
+    networks:
+      - projekti
+    volumes:
+      - static_volume:/static
+
+  nginx:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    container_name: projekti-nginx
+    depends_on:
+      - web
+      - postgresdb
+    restart: always
+    ports:
+      - "82:80"
+      - "443:443"
+    networks:
+      - projekti
+    volumes:
+      - static_volume:/static:ro
+ 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: projekti-cloudflared
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TEST_TUNNEL_TOKEN}
+    networks:
+      - projekti
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  projekti:
+    driver: bridge
+    name: projekti
+
+volumes:
+  postgres_data:
+  static_volume:
