@@ -43,6 +43,8 @@
 - pip (Python package manager)
 - Virtual environment (recommended)
 
+---
+
    ```
 0. Copy Repo.
    ```
