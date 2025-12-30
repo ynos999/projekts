@@ -79,7 +79,7 @@
    python manage.py runserver
    ```
 
-Create .env file and add:
+First create .env file and add:
 
 DEBUG=True
 ALLOWED_HOSTS=127.0.0.1,localhost,mydimain.com,*
