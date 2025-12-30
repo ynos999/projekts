@@ -10,28 +10,32 @@ ENV DEBUG=False
 ENV ENABLE_RECAPTCHA=True
 ENV PRODUCTION=True
 
-# Atjauno pip versiju
-RUN pip install --upgrade pip
-
-# Uztaisam darba direktoriju
-WORKDIR /usr/src/app
-
-#Uztaisa linux lietotāju
-RUN adduser --system --no-create-home --uid 9000 --group --disabled-password --disabled-login --gecos 'gunicorn django user' django
-
-# Nokopet failus direktorija
-COPY requirements requirements/
-COPY entrypoint.sh .
-
-# Ieinstalet modulus no saraksta
-RUN pip install -r requirements/production.txt
-
-# Iedot tiesibas sh failam
-RUN chmod +x entrypoint.sh
-
-# Parkope
-COPY . .
-ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
-
 RUN apt-get update && apt-get -y install \
     nano
+
+RUN pip install --upgrade pip
+
+WORKDIR /usr/src/app
+
+# 1. VISPIRMS izveidojam mapes
+RUN mkdir -p /static /media
+
+# 2. TAD izveidojam lietotāju (lai chown zinātu, kas ir "django")
+RUN adduser --system --no-create-home --uid 9000 --group --disabled-password django
+
+# 3. TAGAD piešķiram tiesības
+RUN chown -R django:django /usr/src/app /static /media
+
+# 4. Sagatavojam atkarības
+COPY requirements.txt .
+COPY entrypoint.sh .
+RUN pip install -r requirements.txt
+RUN chmod +x entrypoint.sh
+
+# Pārslēdzamies uz lietotāju pirms koda kopēšanas
+USER django
+
+# 5. Nokopējam projektu (tagad tas piederēs django lietotājam)
+COPY --chown=django:django . .
+
+ENTRYPOINT ["/usr/src/app/entrypoint.sh"]

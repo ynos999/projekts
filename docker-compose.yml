@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   postgresdb:
     build:
@@ -8,6 +6,8 @@ services:
     container_name: projekti-postgresdb
     labels:
       - "postgresdb=true"
+    env_file:
+      - .env
     environment:
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_HOST: postgresdb
@@ -36,13 +36,14 @@ services:
       - postgresdb
     expose:
       - "8000"
-    # ports:
-    #   - "8000:8000"
+    ports:
+      - "8000:8000"
     networks:
       - projekti
     volumes:
       - static_volume:/static
-
+      - media_volume:/media
+      
   nginx:
     build:
       context: ./docker/nginx
@@ -59,21 +60,33 @@ services:
       - projekti
     volumes:
       - static_volume:/static:ro
- 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: projekti-cloudflared
-    command: tunnel --no-autoupdate run
+      - media_volume:/media:ro
+
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   container_name: projekti-cloudflared
+  #   command: tunnel --no-autoupdate run
+  #   environment:
+  #     - TUNNEL_TOKEN=${TEST_TUNNEL_TOKEN}
+  #   networks:
+  #     - projekti
+  #   restart: unless-stopped
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  redis:
+    image: redis:7-alpine
+    container_name: projekti-redis
+    restart: always
     environment:
-      - TUNNEL_TOKEN=${TEST_TUNNEL_TOKEN}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    expose:
+      - "6379"
     networks:
       - projekti
-    restart: unless-stopped
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
 
 networks:
   projekti:
@@ -83,3 +96,4 @@ networks:
 volumes:
   postgres_data:
   static_volume:
+  media_volume:

@@ -71,13 +71,45 @@
 5. Run the Server:
    ```bash
    python manage.py runserver
+
+
+   export DJANGO_DB=sqlite
+   python manage.py runserver
    ```
+
+Create .env file and add:
+
+DEBUG=True
+ALLOWED_HOSTS=127.0.0.1,localhost,mydimain.com,*
+
+RECAPTCHA_PUBLIC_KEY = 'YourKeyHere'
+RECAPTCHA_PRIVATE_KEY = 'YourKeyHere'
+
+SECRET_KEY = 'SecureKey'
+
+# Database configuration
+DB_USER=
+DB_PASS=
+DB_NAME=
+DB_HOST=
+DB_PORT=
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+
+# EMAIL CREDENTIALS
+EMAIL_HOST=
+EMAIL_USE_TLS=True
+EMAIL_PORT=587
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=YourPasswordHere
+DEFAULT_FROM_EMAIL=
+EMAIL_USE_SSL=False
 
 ### **Project Structure**
 
-```
-Mifrate Server:
-
+For dumpdata:
+```bash
 python manage.py shell
 # Inside shell:
 from django.apps import apps
@@ -86,15 +118,21 @@ print([app.label for app in apps.get_app_configs()])
 ['admin', 'auth', 'contenttypes', 'sessions', 'messages', 'staticfiles', 'tempus_dominus', 'crispy_forms', 'crispy_bootstrap5', 'django_celery_beat', 'phonenumber_field', 'accounts', 'projects', 'tasks', 'notifications', 'teams', 'comments']
 ```
 
-```
 Create fixturas:
-
+```bash
 python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
-
 python manage.py shell -c "from django.contrib.contenttypes.models import ContentType; ContentType.objects.all().delete()"
 ```
 
-   Load fixturas.json:
-   ```bash
-   python manage.py loaddata fixturas.json
-   ```
+Load fixturas.json:
+```bash
+python manage.py loaddata fixturas.json
+```
+
+IF You use docker-compose:
+```bash
+docker compose down
+docker compose down -v
+docker compose build --no-cache
+docker compose up
+```

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Search Results | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-3">
+
+  <h3>Results for "{{ query }}"</h3>
+
+  <!-- Projects Card -->
+  <div class="card mt-3">
+    <div class="card-header">
+      <h3 class="card-title">Projects</h3>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-striped projects">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Team Members</th>
+            <th>Progress</th>
+            <th>Priority</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for project in projects %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>
+              <a href="{% url 'projects:project-detail' project.pk %}">{{ project.name }}</a>
+              <br>
+              <small>Created {{ project.start_date }}</small>
+            </td>
+            <td>
+              <ul class="list-inline">
+                {% for member in project.team.members.all %}
+                <li class="list-inline-item">
+                  <img alt="Avatar" class="table-avatar" src="{{ member.profile.profile_picture_url }}">
+                </li>
+                {% endfor %}
+              </ul>
+            </td>
+            <td class="project_progress">
+              <div class="progress progress-sm">
+                <div class="progress-bar bg-{{ project.status_color }}" role="progressbar" aria-valuenow="{{ project.progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ project.progress }}%"></div>
+              </div>
+              <small>{{ project.progress }}% Complete</small>
+            </td>
+            <td class="project-state">
+              <span class="badge badge-{{ project.priority_color }}">{{ project.priority }}</span>
+            </td>
+            <td class="project-actions text-right">
+              {% if request.user == project.owner %}
+              <a href="{% url 'projects:update' project.pk %}" class="btn btn-info btn-sm">
+                <i class="fas fa-pencil-alt"></i> Edit
+              </a>
+              <a href="{% url 'projects:delete' project.pk %}" class="btn btn-danger btn-sm">
+                <i class="fas fa-trash"></i> Delete
+              </a>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6">No projects found</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Teams Card -->
+  <div class="card mt-3">
+    <div class="card-header">
+      <h3 class="card-title">Teams</h3>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-striped projects">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Team Name</th>
+            <th>Members</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for team in teams %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ team.name }}</td>
+            <td>
+              <ul class="list-inline">
+                {% for member in team.members.all %}
+                <li class="list-inline-item">
+                  <img alt="Avatar" class="table-avatar" src="{{ member.profile.profile_picture_url }}">
+                </li>
+                {% endfor %}
+              </ul>
+            </td>
+            <td>
+              <a href="{% url 'teams:team-detail' team.pk %}" class="btn btn-sm btn-primary">View</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4">No teams found</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

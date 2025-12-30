@@ -9,11 +9,15 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -23,10 +27,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-=d3ttsmjat4wyixx*@3ks^@ja$o_%6b%#_o56$6!7nn871-_k8'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
+# DEBUG=False
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = []
 
+DEBUG = os.environ.get("DEBUG", "True") == "True"
+
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
 # Application definition
 
@@ -92,12 +100,38 @@ WSGI_APPLICATION = 'swifthub.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+
+# --------------------------
+# Datubāze
+# --------------------------
+if os.environ.get("DEBUG") == "True":
+    # Lokāli SQLite
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    # Docker / production
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME"),
+            "USER": os.environ.get("DB_USER"),   # šeit jābūt projectuser
+            "PASSWORD": os.environ.get("DB_PASS"),
+            "HOST": os.environ.get("DB_HOST", "postgresdb"),
+            "PORT": os.environ.get("DB_PORT", 5432),
+        }
+    }
+
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 
 # Password validation
@@ -122,37 +156,67 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'lv'
 
-TIME_ZONE = 'UTC'
+LANGUAGES = [
+    ('en', 'English'),
+    ('lv', 'Latvian')
+]
+
+TIME_ZONE = 'Europe/Riga'
 
 USE_I18N = True
 
 USE_TZ = True
 
+# Pievieno savu lokālo adresi un portu
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1:82',
+    'http://localhost:82',
+    'http://projekti.test.lv'
+]
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+# settings.py
+STATIC_URL = '/static/'
+
+# Šai mapei ir jāsakrīt ar ceļu 'web' servisā iekš docker-compose
+STATIC_ROOT = '/static/' 
 
 STATICFILES_DIRS = [
-    BASE_DIR / "static",  # Add this if you have a project-level static directory
+    BASE_DIR / "static",
 ]
 
-
+# URL, ko redzēs pārlūkprogrammā (piem., /media/bildes/foto.jpg)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR
+
+# Absolūtais ceļš konteinerā, kur faili tiks saglabāti
+# Tāpat kā static, mēs gribam tos likt pašā saknē, lai vieglāk mapot Volume
+MEDIA_ROOT = '/media/'
 
 # CRISPY FORM TEMPLATE TAGS
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-# ==========================
-# CELERY – DISABLED FOR DEV
-# ==========================
-
 # celery configuration options
+
+REDIS_HOST = os.environ.get("REDIS_HOST")
+REDIS_PORT = os.environ.get("REDIS_PORT")
+
+if REDIS_HOST and REDIS_PORT:
+    CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
+    CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+else:
+    CELERY_BROKER_URL = None
+    CELERY_RESULT_BACKEND = None
+    
+# if os.environ.get("REDIS_HOST") and os.environ.get("REDIS_PORT"):
+# CELERY_BROKER_URL = f"redis://{os.environ.get('REDIS_HOST')}:{os.environ.get('REDIS_PORT')}/0"
+
+# CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 # CELERY_BROKER_URL = 'redis://localhost:6379'
 # CELERY_RESULT_BACKEND = 'redis://localhost:6379'
 # CELERY_ACCEPT_CONTENT = ['application/json']
@@ -164,8 +228,8 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
 
 # Fake Celery (ja negribi mainīt kodu)
-CELERY_TASK_ALWAYS_EAGER = True
-CELERY_TASK_EAGER_PROPAGATES = True
+# CELERY_TASK_ALWAYS_EAGER = True
+# CELERY_TASK_EAGER_PROPAGATES = True
 
 
 # custom django auth settings

@@ -181,3 +181,28 @@ class ProfileUpdateView(UpdateView):
         context["header_text"] = "Update Profile"
         context["title"] = "Update Profile"
         return context
+
+from django.shortcuts import render
+from django.db.models import Q
+
+from projects.models import Project
+from teams.models import Team
+
+
+def global_search(request):
+    query = request.GET.get('q', '')
+
+    projects = Project.objects.filter(
+        Q(name__icontains=query) |
+        Q(description__icontains=query)
+    ) if query else []
+
+    teams = Team.objects.filter(
+        Q(name__icontains=query)
+    ) if query else []
+
+    return render(request, 'search/results.html', {
+        'query': query,
+        'projects': projects,
+        'teams': teams,
+    })
