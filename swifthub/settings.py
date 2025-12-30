@@ -18,8 +18,6 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -238,10 +236,13 @@ LOGOUT_URL = 'logout'
 LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = LOGIN_URL
 
+# Tagad piešķiram vērtības no vidi (os.getenv)
+RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY')
+RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY')
 
-# projekti.test.lv keys
-RECAPTCHA_PUBLIC_KEY = 'YourKeyHere'
-RECAPTCHA_PRIVATE_KEY = 'YourKeyHere'
+# Ieteicams: Pievieno pārbaudi, lai izvairītos no kļūdām, ja mainīgie pazūd
+if not RECAPTCHA_PUBLIC_KEY:
+    print("Warning: RECAPTCHA_PUBLIC_KEY is not set!")
 
 RECAPTCHA_REQUIRED_SCORE = 0.6
 RECAPTCHA_USE_SSL = False
