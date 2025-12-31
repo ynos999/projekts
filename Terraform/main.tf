@@ -22,7 +22,7 @@ resource "hcloud_server" "projects" {
   #  ssh_keys    = [hcloud_ssh_key.default.id]
 
   # izmanto jau esošu SSH key Hetzner panelī
-  ssh_keys = ["Edijs"]
+  ssh_keys = var.ssh_keys
 
   labels = {
     project = "projects"

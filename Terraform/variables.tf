@@ -13,3 +13,8 @@ variable "ssh_public_key" {
   description = "SSH publiskās atslēgas fails"
   type        = string
 }
+
+variable "ssh_keys" {
+  description = "SSH keys no Hetzner Cloud"
+  type        = list(string)
+}
