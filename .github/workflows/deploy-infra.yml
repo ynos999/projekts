@@ -1,0 +1,61 @@
+name: Deploy Docker Compose
+on:
+  push:
+    paths:
+      - ".github/workflows/deploy-infra.yml"
+      - "docker/**"
+      - "**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Start SSH tunnel to Docker daemon
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+              -i ~/.ssh/id_rsa \
+              -fNL 2375:localhost:2375 \
+              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}
+
+      - name: Run Docker Compose
+        # working-directory: ./
+        env:
+          DEBUG: "False"
+          HOSTS: "projekti.testi.lv,*"
+          DOCKER_HOST: tcp://localhost:2375
+          POSTGRES_PORT: 5432
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+          TEST_TUNNEL_TOKEN: ${{ secrets.TUNNEL_TOKEN }}
+          ENABLE_RECAPTCHA: "False"
+          PRODUCTION: "False"
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+          EMAIL_USE_TLS: "True"
+          EMAIL_PORT: 587
+          EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+          EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_PASS }}
+          DEFAULT_FROM_EMAIL: ${{ secrets.EMAIL_HOST_USER }}
+          EMAIL_USE_SSL: "False"
+          
+        run: |
+          envsubst < docker-compose.yml > docker-compose.temp.yml
+          docker compose -f docker-compose.temp.yml up -d --build --remove-orphans
+          docker image prune -a -f
+          rm docker-compose.temp.yml
+
+      - name: Remove .env file
+        run: rm -f .env

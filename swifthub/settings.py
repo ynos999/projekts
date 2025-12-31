@@ -236,20 +236,57 @@ LOGOUT_URL = 'logout'
 LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = LOGIN_URL
 
-# Tagad piešķiram vērtības no vidi (os.getenv)
+# Ielādējam atslēgas no .env
 RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY')
 RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY')
 
-# Ieteicams: Pievieno pārbaudi, lai izvairītos no kļūdām, ja mainīgie pazūd
-if not RECAPTCHA_PUBLIC_KEY:
-    print("Warning: RECAPTCHA_PUBLIC_KEY is not set!")
+# TESTA VIDEI (kad DEBUG ir True)
+if os.getenv('DEBUG') == 'True':
+    # Šis mainīgais pasaka django-recaptcha neiet uz Google serveriem, 
+    # bet vienmēr atgriezt "True" validāciju.
+    os.environ['RECAPTCHA_TESTING'] = 'True'
 
-RECAPTCHA_REQUIRED_SCORE = 0.6
-RECAPTCHA_USE_SSL = False
+    
+    # Ja .env failā nav atslēgu, iestatām testa atslēgas, lai sistēma neizmet kļūdu
+    if not RECAPTCHA_PUBLIC_KEY:
+        RECAPTCHA_PUBLIC_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
+        RECAPTCHA_PRIVATE_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
+
+# Produkcijas pārbaude
+if not RECAPTCHA_PUBLIC_KEY and os.getenv('DEBUG') != 'True':
+    print("WARNING: RECAPTCHA_PUBLIC_KEY is missing in Production!")
+
+# Iestatījumi
+RECAPTCHA_REQUIRED_SCORE = 0.5
 RECAPTCHA_LANGUAGE = 'lv'
+
+# Svarīgi: Ja lieto Nginx bez SSL (port 82), atstāj šo False
+RECAPTCHA_USE_SSL = False 
+
+# Izmanto tieši šo nosaukumu, ko rāda kļūda:
+SILENCED_SYSTEM_CHECKS = ['django_recaptcha.recaptcha_test_key_error']
 
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+#E pasts:
+
+# Pārbauda, vai lietot e-pastu pa īstam vai tikai izvadīt konsolē
+if os.getenv('DEBUG') == 'True':
+    # Izstrādes laikā: izvada e-pastu terminālī, nesūtot nekur
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    # Produkcijā: izmanto reālo SMTP
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+EMAIL_USE_SSL=os.getenv('EMAIL_USE_SSL')
+

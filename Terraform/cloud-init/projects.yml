@@ -1,0 +1,72 @@
+#cloud-config
+
+# ---------------------------
+# Lietotāju konfigurācija
+# ---------------------------
+users:
+  - name: ${ssh_user}
+    groups: [sudo, docker]
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+
+# Drošība
+disable_root: true
+ssh_pwauth: false
+
+# Pakotnes, kas jāinstalē
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - lsb-release
+  - software-properties-common
+  - git
+  - docker.io  # opcija, ja Docker no repozitorija
+
+# ---------------------------
+# Runcmd
+# ---------------------------
+runcmd:
+  # Docker instalācija no oficiālā Docker repo
+  - |
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+    apt-get update
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    systemctl enable docker
+    systemctl start docker
+
+  # Docker daemon TCP konfigurācija
+  - |
+    sed -i 's|ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock|ExecStart=/usr/bin/dockerd --containerd=/run/containerd/containerd.sock|' /lib/systemd/system/docker.service
+    mkdir -p /etc/docker
+    cat << 'EOF' > /etc/docker/daemon.json
+    {
+      "hosts": ["tcp://0.0.0.0:2375", "unix:///var/run/docker.sock"]
+    }
+    EOF
+    systemctl daemon-reload
+    systemctl restart docker
+
+  # Pievieno lietotāju docker grupai (ja vēl nav)
+  - usermod -aG docker ${ssh_user}
+  # Izveido .ssh mapes, ja vēl nav
+  - mkdir -p /home/${ssh_user}/.ssh
+  - echo "${ssh_public_key}" >> /home/${ssh_user}/.ssh/authorized_keys
+  - chown -R ${ssh_user}:${ssh_user} /home/${ssh_user}/.ssh
+  - chmod 700 /home/${ssh_user}/.ssh
+  - chmod 600 /home/${ssh_user}/.ssh/authorized_keys
+
+  # Ģenerē GitHub Actions SSH key (ED25519, bez paroles)
+  - sudo -u ${ssh_user} ssh-keygen -t ed25519 -f /home/${ssh_user}/.ssh/github_actions -C "github-actions@kalendars" -N ""
+
+  # Pievieno GitHub Actions publisko key pie authorized_keys
+  - cat /home/${ssh_user}/.ssh/github_actions.pub >> /home/${ssh_user}/.ssh/authorized_keys
+  - chmod 600 /home/${ssh_user}/.ssh/authorized_keys
+
+  # Restart SSH, lai pārliecinātos, ka key-based login strādā
+  - systemctl reload ssh
+

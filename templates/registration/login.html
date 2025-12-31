@@ -1,24 +1,47 @@
 {% extends "registration/auth_base.html" %}
-{% block title %}Login | {{block.super }}{% endblock %}
+{% block title %}Login | {{ block.super }}{% endblock %}
 {% load crispy_forms_tags %}
 
 {% block content %}
-
 <div class="card-body">
   <p class="login-box-msg">Sign in to start your session</p>
 
-  <form action="" method="post">
+  <form id="login-form" action="" method="post">
     {% csrf_token %}
+    
+    {# Galvenā forma #}
     {{ form|crispy }}
+    
+    {# Specifiskas Captcha kļūdas (ja crispy tās neizvada automātiski) #}
+    {% if form.captcha.errors %}
+      <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        {% for error in form.captcha.errors %}{{ error }}{% endfor %}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    {% endif %}
 
-    <div class="social-auth-links text-center mt-2 mb-3">
-      <button class="btn btn-block btn-primary">
-        <i class="mr-2"></i> Login
+    <div class="mt-4">
+      <button type="submit" id="submit-btn" class="btn btn-primary btn-block shadow-sm">
+        <span id="btn-text">Login</span>
+        <span id="btn-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
       </button>
     </div>
   </form>
 
-
+  <!-- <p class="mt-3 mb-1">
+    <a href="{% url 'password_reset' %}">I forgot my password</a>
+  </p> -->
 </div>
 
+<script>
+  // Vienkāršs skripts, lai poga "iegrieztos" pie iesniegšanas
+  document.getElementById('login-form').onsubmit = function() {
+    document.getElementById('btn-text').classList.add('invisible');
+    document.getElementById('btn-spinner').classList.remove('d-none');
+    document.getElementById('submit-btn').disabled = true;
+  };
+</script>
 {% endblock %}

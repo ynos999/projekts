@@ -9,6 +9,8 @@ from .views import (
 )
 
 from . import views
+from .forms import LoginFormWithCaptcha
+from django.contrib.auth import views as auth_views
 
 app_name = 'accounts'
 
@@ -24,4 +26,15 @@ urlpatterns = [
 
     # change password
     path('password-change', PasswordChangeView.as_view(), name='password-change'),
+    
+    # PIEVIENO ŠOS DIVUS:
+
+    path('logout/', auth_views.LogoutView.as_view(
+        next_page='accounts:login' # Pēc iziešanas metīs uz login
+    ), name='logout'),
+    
+    path('login/', auth_views.LoginView.as_view(
+        template_name='registration/login.html',
+        authentication_form=LoginFormWithCaptcha # Tagad šis strādās
+    ), name='login'),
 ]

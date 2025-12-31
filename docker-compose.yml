@@ -88,6 +88,40 @@ services:
     networks:
       - projekti
 
+  
+  db-maintenance:
+    image: postgres:14
+    container_name: projekti-db_maintenance
+    depends_on:
+      - postgresdb
+    environment:
+      - PGPASSWORD=${DB_PASS}
+      - DB_USER=${DB_USER}
+      - DB_NAME=${DB_NAME}
+      - DB_HOST=${DB_HOST}
+    entrypoint: |
+      /bin/sh -c "
+      echo 'Maintenance script started. Target time: 03:00 every day.'
+      while true; do
+        # Aprēķinām sekundes līdz rītdienas 03:00
+        TARGET_HOUR=3
+        CURRENT_SECOND_OF_DAY=\$(date +%s)
+        # Dabūjam nākamās dienas 03:00 unix timestamp
+        NEXT_RUN=\$(date -d 'tomorrow 03:00' +%s)
+        SECONDS_TO_SLEEP=\$((NEXT_RUN - CURRENT_SECOND_OF_DAY))
+        
+        echo \"Sleeping for \$SECONDS_TO_SLEEP seconds until 03:00...\"
+        sleep \$SECONDS_TO_SLEEP
+        
+        echo \"Starting maintenance at \$(date)\"
+        psql -h \${DB_HOST} -U \${DB_USER} -d \${DB_NAME} -c 'VACUUM ANALYZE;'
+        echo \"Maintenance finished.\"
+      done
+      "
+    restart: always
+    networks:
+      - projekti
+
 networks:
   projekti:
     driver: bridge

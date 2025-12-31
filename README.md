@@ -138,3 +138,16 @@ docker compose down -v
 docker compose build --no-cache
 docker compose up
 ```
+
+```
+If You use github worklows add secrets:
+DB_HOST
+DB_NAME
+DB_USER
+DB_PASS
+TUNNEL_TOKEN
+SECRET_KEY
+EMAIL_HOST
+EMAIL_HOST_USER
+EMAIL_PASS
+```

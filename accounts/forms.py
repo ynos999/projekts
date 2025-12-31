@@ -4,6 +4,10 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Profile
 
+from django.contrib.auth.forms import AuthenticationForm
+from django_recaptcha.fields import ReCaptchaField
+from django_recaptcha.widgets import ReCaptchaV3
+
 class RegisterForm(UserCreationForm):
 
     class Meta:
@@ -63,3 +67,8 @@ class ProfileUpdateForm(forms.ModelForm):
             'phone',
             'date_of_birth'
         ]
+        
+
+class LoginFormWithCaptcha(AuthenticationForm):
+    captcha = ReCaptchaField(widget=ReCaptchaV3)
+    
