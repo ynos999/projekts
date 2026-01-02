@@ -8,9 +8,13 @@ from .models import Project
 from .forms import ProjectForm, AttachmentForm
 from comments.models import Comment
 from comments.forms import CommentForm
-from tasks.forms import TaskUpdateForm, TaskUserAssignmentForm
+from tasks.forms import TaskUpdateForm
 
 from notifications.tasks import create_notification
+from django.db.models import Q, CharField
+from django.db.models.functions import Cast
+from datetime import datetime
+
 
 
 class ProjectCreateView(CreateView):
@@ -56,24 +60,7 @@ class ProjectCreateView(CreateView):
         
         # 4. Atgriežam response, kas automātiski veiks pārvirzīšanu uz success_url
         return response
-
-    # def form_valid(self, form):
-    #     project = form.save(commit=False)
-    #     project.owner = self.request.user
-    #     project.save()
-    #     # send notification
-    #     actor_username = self.request.user.username
-    #     verb = f'New Project Assignment, {project.name}'
-
-    #     create_notification.delay(
-    #         actor_username=actor_username,
-    #         verb=verb,
-    #         object_id=project.id,
-    #         content_type_model="project",
-    #         content_type_app_label="projects"
-    #     )
-    #     return redirect(self.success_url)
-
+    
 
 class ProjectListView(ListView):
     model = Project
@@ -82,20 +69,108 @@ class ProjectListView(ListView):
     paginate_by = 5
 
     def get_queryset(self):
-        return Project.objects.for_user(self.request.user)
+        # 1. Pamata queryset
+        queryset = Project.objects.for_user(self.request.user)
+        
+        query = self.request.GET.get('q')
+        
+        if query:
+            # 2. Mēģinām pārvērst ievadīto tekstu (DD.MM.YYYY) uz datubāzes datumu (YYYY-MM-DD)
+            parsed_date = None
+            try:
+                parsed_date = datetime.strptime(query, "%d.%m.%Y").strftime("%Y-%m-%d")
+            except ValueError:
+                pass
+
+            # 3. Veicam meklēšanu
+            # Annotate vajadzīgs, lai meklētu daļēju datumu (piem. tikai "2026")
+            queryset = queryset.annotate(
+                due_date_str=Cast('due_date', CharField())
+            ).filter(
+                Q(name__icontains=query) | 
+                Q(description__icontains=query) |
+                Q(due_date_str__icontains=query)
+            )
+
+            # 4. Ja lietotājs ievadīja precīzu datumu (ar punktiem), pievienojam to rezultātiem
+            if parsed_date:
+                # Izmantojam |= lai apvienotu (OR) rezultātus
+                queryset |= Project.objects.for_user(self.request.user).filter(due_date=parsed_date)
+
+        return queryset.distinct().order_by('-created_at')
 
     def get_context_data(self, **kwargs):
-        # latest notifications
         context = super(ProjectListView, self).get_context_data(**kwargs)
-        # if self.request.user.is_authenticated:
-        latest_notifications = self.request.user.notifications.unread(
-            self.request.user)
-
+        # Saglabājam paziņojumu loģiku
+        latest_notifications = self.request.user.notifications.unread(self.request.user)
         context["latest_notifications"] = latest_notifications[:3]
         context["notification_count"] = latest_notifications.count()
+        
+        # Saglabājam meklēšanas vārdu formā
+        context["search_query"] = self.request.GET.get('q', '')
+        
         context["header_text"] = "Projects"
         context["title"] = "All Projects"
         return context
+
+# class ProjectListView(ListView):
+#     model = Project
+#     context_object_name = "projects"
+#     template_name = "projects/project_list.html"
+#     paginate_by = 5
+
+#     def get_queryset(self):
+#         # Iegūstam visus lietotāja projektus (izmantojot Tavu esošo manageri)
+#         queryset = Project.objects.for_user(self.request.user)
+        
+#         query = self.request.GET.get('q')
+        
+#         if query:
+#             # Pievienojam annotāciju datumam, lai to varētu meklēt kā tekstu
+#             queryset = queryset.annotate(
+#                 due_date_str=Cast('due_date', CharField())
+#             ).filter(
+#                 Q(name__icontains=query) | 
+#                 Q(description__icontains=query) |
+#                 Q(due_date_str__icontains=query)
+#             )
+#         return queryset.order_by('-created_at')
+
+#     def get_context_data(self, **kwargs):
+#         context = super(ProjectListView, self).get_context_data(**kwargs)
+#         # Pievienojam paziņojumu loģiku, kas Tev jau bija
+#         latest_notifications = self.request.user.notifications.unread(self.request.user)
+#         context["latest_notifications"] = latest_notifications[:3]
+#         context["notification_count"] = latest_notifications.count()
+        
+#         # Saglabājam meklēšanas vārdu formā
+#         context["search_query"] = self.request.GET.get('q', '')
+        
+#         context["header_text"] = "Projects"
+#         context["title"] = "All Projects"
+#         return context
+
+# class ProjectListView(ListView):
+#     model = Project
+#     context_object_name = "projects"
+#     template_name = "projects/project_list.html"
+#     paginate_by = 5
+
+#     def get_queryset(self):
+#         return Project.objects.for_user(self.request.user)
+
+#     def get_context_data(self, **kwargs):
+#         # latest notifications
+#         context = super(ProjectListView, self).get_context_data(**kwargs)
+#         # if self.request.user.is_authenticated:
+#         latest_notifications = self.request.user.notifications.unread(
+#             self.request.user)
+
+#         context["latest_notifications"] = latest_notifications[:3]
+#         context["notification_count"] = latest_notifications.count()
+#         context["header_text"] = "Projects"
+#         context["title"] = "All Projects"
+#         return context
 
 
 class ProjectNearDueDateListView(ListView):
