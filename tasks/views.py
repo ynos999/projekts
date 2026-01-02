@@ -1,4 +1,3 @@
-from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_POST
 from django.template.loader import render_to_string
 import json
@@ -8,26 +7,50 @@ from projects.models import Project
 from .forms import TaskUpdateForm, TaskUserAssignmentForm
 from notifications.tasks import create_notification
 
+from django.views.generic import CreateView, ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
+from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import get_object_or_404
+from django.views.generic import UpdateView
+from django.views.generic import DeleteView
+from django.db.models import Q, CharField
+from django.db.models.functions import Cast
+from datetime import datetime
+
 
 @require_POST
+
+@csrf_exempt
 def update_task_status_ajax(request, task_id):
-    try:
-        task = Task.objects.get(id=task_id)
-        data = json.loads(request.body)
+    if request.method == "POST":
+        task = get_object_or_404(Task, id=task_id)
+        new_status_slug = request.POST.get('status')
+        
+        # DEBUG: Redzēsi terminālī, ko tieši atsūta JS
+        print(f"DEBUG: Saņemts statusa slug: '{new_status_slug}'")
 
-        new_status = data.get('status').title()
-        print(new_status)
-
-        # check if status is valid
-        if new_status in ['Backlog', 'To Do', 'In Progress', 'Completed']:
+        status_map = {
+            'backlog': 'Backlog',
+            'todo': 'To Do',
+            'to do': 'To Do',         # Pievienots šis
+            'inprogress': 'In Progress',
+            'in progress': 'In Progress', # Pievienots šis
+            'completed': 'Completed'
+        }
+        
+        new_status = status_map.get(new_status_slug)
+        
+        if new_status:
             task.status = new_status
             task.save()
-            return JsonResponse({'success': True})
+            print(f"DEBUG: Veiksmīgi saglabāts: {new_status}")
+            return JsonResponse({'success': True, 'status': task.status})
         else:
-            return JsonResponse({'success': False, 'error': 'Invalid status'}, status=400)
-
-    except Task.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Task not found'}, status=404)
+            print(f"DEBUG: KĻŪDA! '{new_status_slug}' nav atrodams status_map")
+            return JsonResponse({'success': False, 'error': f'Invalid status: {new_status_slug}'}, status=400)
+            
+    return JsonResponse({'success': False}, status=405)
     
 
 @require_POST
@@ -144,3 +167,74 @@ def get_task_assignment_form(request, task_id):
         return JsonResponse({'html': html})
     except Task.DoesNotExist:
         return JsonResponse({'error': 'Task not found'}, status=404)
+
+class TaskListView(LoginRequiredMixin, ListView):
+    model = Task
+    context_object_name = "tasks"
+    template_name = "tasks/task_list.html"
+
+    def get_queryset(self):
+        queryset = Task.objects.filter(owner=self.request.user)
+        query = self.request.GET.get('q')
+
+        if query:
+            # 1. Mēģinām saprast, vai lietotājs ievadījis datumu formātā DD.MM.YYYY
+            parsed_date = None
+            try:
+                # Ja izdodas konvertēt, iegūstam YYYY-MM-DD formātu meklēšanai
+                parsed_date = datetime.strptime(query, "%d.%m.%Y").strftime("%Y-%m-%d")
+            except ValueError:
+                pass
+
+            # 2. Veidojam filtru
+            queryset = queryset.annotate(
+                due_date_str=Cast('due_date', CharField())
+            ).filter(
+                Q(name__icontains=query) | 
+                Q(description__icontains=query) |
+                Q(project__name__icontains=query) |
+                Q(status__icontains=query) |
+                Q(due_date_str__icontains=query) # Meklē standarta formātu (2026-01-07)
+            )
+
+            # 3. Ja tika atpazīts datums, pievienojam to kā papildus "VAI" nosacījumu
+            if parsed_date:
+                queryset = queryset | Task.objects.filter(owner=self.request.user, due_date=parsed_date)
+        
+        return queryset.distinct().order_by('due_date')
+    
+class ActiveTaskListView(TaskListView):
+    def get_queryset(self):
+        # Papildus filtrējam, lai rādītu tikai nepabeigtos
+        return super().get_queryset().exclude(status='Completed')
+
+class TaskCreateView(LoginRequiredMixin, CreateView):
+    model = Task
+    # Pievienotie lauki: description, priority, start_date, due_date
+    fields = ['name', 'project', 'user_assigned_to','description', 'priority', 'status','start_date', 'due_date']
+    template_name = 'tasks/task_form.html'
+    success_url = reverse_lazy('tasks:list')
+
+    def form_valid(self, form):
+        # Automātiski piesaistām ielogojušos lietotāju kā owner
+        form.instance.owner = self.request.user
+        return super().form_valid(form)
+
+
+class TaskDeleteView(LoginRequiredMixin, DeleteView):
+    model = Task
+    # Pēc dzēšanas lietotājs tiks novirzīts atpakaļ uz sarakstu
+    success_url = reverse_lazy('tasks:list')
+    
+    # Šis nodrošina, ka lietotājs var dzēst tikai savus vai projektam piesaistītos uzdevumus (pēc izvēles)
+    def get_queryset(self):
+        return Task.objects.filter(owner=self.request.user)
+
+class TaskUpdateView(LoginRequiredMixin, UpdateView):
+    model = Task
+    fields = ['name', 'project', 'user_assigned_to','description', 'priority', 'status','start_date', 'due_date']
+    template_name = 'tasks/task_form.html'  # Pārliecinies, ka šis fails eksistē!
+    success_url = reverse_lazy('tasks:list')
+
+    def get_queryset(self):
+        return Task.objects.filter(owner=self.request.user)

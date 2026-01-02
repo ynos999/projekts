@@ -60,7 +60,7 @@
                 <a href="#" class="btn btn-tool">
                     <i class="fas fa-user-plus"></i>
                 </a>
-
+                {{ task.user_assigned_to.get_full_name|default:task.user_assigned_to.username }}
                 {% if task.user_assigned_to %}
                   <a href="#">
                   <img src="{{ task.user_assigned_to.profile.profile_picture_url }}" height="20" width="20" class="img-circle elevation-2" alt="{{ task.user_assigned_to.profile.full_name}}">
@@ -279,25 +279,63 @@
     })
 
     //update status ajax
-    function  updateTaskStatus(taskId, newStatus) {
-      fetch(`/tasks/update-task-status-ajax/${taskId}/`, {
+    // function  updateTaskStatus(taskId, newStatus) {
+    //   fetch(`/tasks/update-task-status-ajax/${taskId}/`, {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //       'X-CSRFToken': '{{ csrf_token }}',
+    //     },
+    //     body: JSON.stringify({status: newStatus}),
+    //   })
+    //   .then(response => response.json())
+    //   .then(data => {
+    //     if(data.success){
+    //       console.log('Task status updated successfully');
+
+    //     }else{
+    //       console.error('Error updating task status')
+    //     }
+    //   });
+    // }
+function updateTaskStatus(taskId, newStatus) {
+    console.log("Sūtam uz serveri:", taskId, newStatus); // Pārbaudi konsolē (F12)
+
+    fetch(`/tasks/update-task-status-ajax/${taskId}/`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
         },
-        body: JSON.stringify({status: newStatus}),
-      })
-      .then(response => response.json())
-      .then(data => {
-        if(data.success){
-          console.log('Task status updated successfully');
-
-        }else{
-          console.error('Error updating task status')
+        body: `status=${newStatus}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) { // Nomainīts no data.status uz data.success
+            console.log("Statuss atjaunots datubāzē!");
+        } else {
+            console.error("Serveris nesaglabāja:", data.error);
         }
-      });
-    }
+    })
+    .catch(error => console.error("Network error:", error));
+}
+  // function updateTaskStatus(taskId, newStatus) {
+  //     // newStatus vērtība nāk no kolonnas ID (piem. 'todo', 'inprogress')
+  //     fetch(`/tasks/update-task-status-ajax/${taskId}/`, {
+  //         method: 'POST',
+  //         headers: {
+  //             'Content-Type': 'application/x-www-form-urlencoded',
+  //             'X-CSRFToken': '{{ csrf_token }}' // Obligāti drošībai
+  //         },
+  //         body: `status=${newStatus}`
+  //     })
+  //     .then(response => response.json())
+  //     .then(data => {
+  //         if (data.status === 'success') {
+  //             console.log("Statuss atjaunots datubāzē!");
+  //         }
+  //     });
+  // }
 
 
     //submitting form on enter key

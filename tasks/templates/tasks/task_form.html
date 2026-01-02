@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<section class="content-header">
+    <div class="container-fluid">
+        <h1>Izveidot jaunu uzdevumu</h1>
+    </div>
+</section>
+<section class="content">
+    <div class="container-fluid">
+        <div class="card card-primary">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.name|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.project|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.user_assigned_to|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    {{ form.description|as_crispy_field }}
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            {{ form.priority|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.status|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.start_date|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.due_date|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="card-footer text-right">
+                    <a href="{% url 'tasks:list' %}" class="btn btn-secondary">Atcelt</a>
+                    <button type="submit" class="btn btn-success">Saglabāt uzdevumu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<script>
+    // Piespiežam pārlūkam rādīt kalendāru datumu laukos
+    document.addEventListener("DOMContentLoaded", function() {
+        const start = document.querySelector('input[name="start_date"]');
+        const due = document.querySelector('input[name="due_date"]');
+        if(start) start.type = 'date';
+        if(due) due.type = 'date';
+    });
+</script>
+{% endblock %}

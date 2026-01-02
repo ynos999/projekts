@@ -6,15 +6,28 @@ from .views import (
     assign_user_to_task, 
     get_task_assignment_form
     )
+from django.urls import path
+from .views import TaskListView, ActiveTaskListView, TaskCreateView, TaskDeleteView
+from . import views
+
 
 app_name = 'tasks'
 
 urlpatterns = [
-    path('update-task-status-ajax/<uuid:task_id>/', update_task_status_ajax, name="update-task-status"),
-    path('create-task-ajax/', create_task_ajax, name="create-task-ajax"),
-    path('<uuid:task_id>/get/', get_task, name="get_task"),
-    path('<uuid:task_id>/update/', update_task, name="update_task"),
-    path('<uuid:task_id>/assign-user/', assign_user_to_task, name="assign-user"),
-    path('<uuid:task_id>/assignment-form/', get_task_assignment_form, name="assignment-form"),
+
+# 1. Galvenie saraksti un lapas (HTML)
+    path('', views.TaskListView.as_view(), name='list'),
+    path('active/', views.ActiveTaskListView.as_view(), name='active-tasks'),
+    path('create/', views.TaskCreateView.as_view(), name='create'),
+    path('<uuid:pk>/update/', views.TaskUpdateView.as_view(), name='update'),
+    path('<uuid:pk>/delete/', views.TaskDeleteView.as_view(), name='delete'),
+
+    # 2. AJAX operācijas (Datiem fonā)
+    # Pārliecinies, ka tavā kanbanboard.html JavaScript tagad izmanto šīs adreses!
+    path('ajax/status-update/<uuid:task_id>/', views.update_task_status_ajax, name='update-task-status-ajax'),
+    path('ajax/create/', views.create_task_ajax, name="create-task-ajax"),
+    path('ajax/get/<uuid:task_id>/', views.get_task, name="get_task"),
+    path('ajax/assign-user/<uuid:task_id>/', views.assign_user_to_task, name="assign-user"),
+    path('ajax/assignment-form/<uuid:task_id>/', views.get_task_assignment_form, name="assignment-form"),
 
 ]

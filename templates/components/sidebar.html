@@ -57,20 +57,20 @@
                   <ul class="nav nav-treeview">
                     <li class="nav-item">
                       <a href="{% url "projects:list" %}" class="nav-link {% if request.resolver_match.url_name == 'list'  %}active{% endif %} ">
-                        <i class="far fa-circle nav-icon"></i>
+                        <i class="far fa-circle nav-icon text-danger"></i>
                         <p>All Projects</p>
                       </a>
                     </li>
                     <li class="nav-item">
                       <a href="{% url "projects:create" %}" class="nav-link {% if request.resolver_match.url_name == 'create'  %}active{% endif %} ">
-                        <i class="far fa-circle nav-icon"></i>
+                        <i class="far fa-circle nav-icon text-info"></i>
                         <p>Add Project</p>
                       </a>
                     </li>
                   </ul>
                 </li>
 
-              <!-- Tasks -->
+              <!-- Teams -->
               <li class="nav-item">
                 <a href="#" class="nav-link {% if request.resolver_match.url_name == 'team-create'  or request.resolver_match.url_name == 'team-list' %}active{% endif %}">
                   <i class="nav-icon fas fa-users"></i>
@@ -82,20 +82,52 @@
                 <ul class="nav nav-treeview">
                   <li class="nav-item">
                     <a href="{% url "teams:team-list" %}" class="nav-link {% if request.resolver_match.url_name == 'team-list' %}active{% endif %}">
-                      <i class="far fa-circle nav-icon"></i>
+                      <i class="far fa-circle nav-icon text-danger"></i>
                       <p>All Teams</p>
                     </a>
                   </li>
                   <li class="nav-item">
                     <a href="{% url "teams:team-create" %}" class="nav-link {% if request.resolver_match.url_name == 'team-create' %}active{% endif %}">
-                      <i class="far fa-circle nav-icon"></i>
+                      <i class="far fa-circle nav-icon text-info"></i>
                       <p>Add Teams</p>
                     </a>
                   </li>
                 </ul>
               </li>
 
-            
+              <!-- Tasks -->
+              <li class="nav-item">
+                <a href="#" class="nav-link">
+                  <i class="nav-icon fas fa-tasks"></i>
+                  <p>
+                    Tasks
+                    <i class="fas fa-angle-left right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <li class="nav-item">
+                    <!-- <a href="{% url 'tasks:list' %}" class="nav-link"> -->
+                    <a href="{% url 'tasks:list' %}" class="nav-link {% if request.resolver_match.url_name == 'list' %}active{% endif %}">
+                      <i class="far fa-circle nav-icon text-danger"></i>
+                      <p>All Tasks</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <!-- <a href="{% url 'tasks:active-tasks' %}" class="nav-link"> -->
+                    <a href="{% url 'tasks:active-tasks' %}" class="nav-link {% if request.resolver_match.url_name == 'active-tasks' %}active{% endif %}">
+                      <i class="far fa-circle nav-icon text-info"></i>
+                      <p>Active Tasks</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <!-- <a href="{% url 'tasks:create' %}" class="nav-link"> -->
+                    <a href="{% url 'tasks:create' %}" class="nav-link {% if request.resolver_match.url_name == 'create' %}active{% endif %}">
+                      <i class="far fa-circle nav-icon text-success"></i>
+                      <p>New Task</p>
+                    </a>
+                  </li>
+                </ul>
+              </li>
 
         </ul>
       </nav>

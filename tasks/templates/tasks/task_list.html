@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-4">
+                <h1 class="m-0">Tasks</h1>
+            </div>
+
+            <div class="col-md-5">
+                <form method="get" action="{% url 'tasks:list' %}" class="input-group">
+                    <input type="text" name="q" class="form-control" placeholder="Meklēt uzdevumu..." value="{{ search_query }}">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-primary" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        {% if search_query %}
+                            <a href="{% url 'tasks:list' %}" class="btn btn-outline-secondary" title="Notīrīt">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+
+            <!-- <div class="col-md-3 text-right">
+                <a href="{% url 'tasks:create' %}" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Pievienot jaunu
+                </a>
+            </div> -->
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-body p-0">
+                <table class="table table-striped projects">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%">Uzdevums</th>
+                            <th style="width: 20%">Projekts</th>
+                            <th>Status</th>
+                            <th>Prioritāte</th>
+                            <th>Termiņš</th>
+                            <th style="width: 20%">Progress</th>
+                            <th style="width: 10%">Darbības</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr>
+                            <td>{{ task.name }}</td>
+                            <td>{{ task.project.name }}</td>
+                            <td>
+                                <span class="badge badge-{{ task.status_color }}">
+                                    {{ task.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-{{ task.priority_color }}">
+                                    <i class="fas fa-flag"></i> {{ task.priority }}
+                                </span>
+                            </td>
+                            <td>{{ task.due_date|date:"d.m.Y" }}</td>
+                            <td class="project_progress">
+                                <div class="progress progress-sm">
+                                    <div class="progress-bar bg-green" role="progressbar" 
+                                         style="width: {{ task.progress }}%">
+                                    </div>
+                                </div>
+                                <small>{{ task.progress }}% Complete</small>
+                            </td>
+                            <td class="btn-group">
+                                <a href="{% url 'tasks:update' task.id %}" class="btn btn-info btn-sm" title="Labot">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </a>
+                                <a href="{% url 'tasks:delete' task.id %}" class="btn btn-sm btn-danger" title="Dzēst">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">Nav atrasts neviens uzdevums.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

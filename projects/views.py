@@ -17,7 +17,8 @@ class ProjectCreateView(CreateView):
     model = Project
     form_class = ProjectForm
     template_name = 'projects/project_create_and_update.html'
-    success_url = reverse_lazy("accounts:dashboard")
+    # success_url = reverse_lazy("accounts:dashboard")
+    success_url = reverse_lazy('projects:list')
 
     def get_context_data(self, **kwargs):
         # latest notifications
@@ -32,23 +33,46 @@ class ProjectCreateView(CreateView):
         context["title"] = "Project Add"
         context["button_text"] = "Create new Project"
         return context
-
+    
     def form_valid(self, form):
-        project = form.save(commit=False)
-        project.owner = self.request.user
-        project.save()
-        # send notification
+        # 1. Piesaistām īpašnieku
+        form.instance.owner = self.request.user
+        
+        # 2. Izsaucam super() metodi, kas saglabā objektu datubāzē
+        # un izveido self.object mainīgo, ko var izmantot paziņojumam
+        response = super().form_valid(form)
+        
+        # 3. Nosūtām paziņojumu (izmantojot self.object)
         actor_username = self.request.user.username
-        verb = f'New Project Assignment, {project.name}'
+        verb = f'New Project Assignment, {self.object.name}'
 
         create_notification.delay(
             actor_username=actor_username,
             verb=verb,
-            object_id=project.id,
+            object_id=self.object.id,
             content_type_model="project",
             content_type_app_label="projects"
         )
-        return redirect(self.success_url)
+        
+        # 4. Atgriežam response, kas automātiski veiks pārvirzīšanu uz success_url
+        return response
+
+    # def form_valid(self, form):
+    #     project = form.save(commit=False)
+    #     project.owner = self.request.user
+    #     project.save()
+    #     # send notification
+    #     actor_username = self.request.user.username
+    #     verb = f'New Project Assignment, {project.name}'
+
+    #     create_notification.delay(
+    #         actor_username=actor_username,
+    #         verb=verb,
+    #         object_id=project.id,
+    #         content_type_model="project",
+    #         content_type_app_label="projects"
+    #     )
+    #     return redirect(self.success_url)
 
 
 class ProjectListView(ListView):
@@ -137,7 +161,7 @@ class ProjectUpdateView(UpdateView):
         return super().form_invalid(form)
 
     def get_success_url(self):
-        return reverse_lazy('projects:project-detail', kwars={'pk': self.object.pk})
+        return reverse_lazy('projects:project-detail', kwargs={'pk': self.object.pk})
 
 
 class ProjectDeleteView(DeleteView):

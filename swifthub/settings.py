@@ -195,6 +195,9 @@ MEDIA_URL = '/media/'
 # Tāpat kā static, mēs gribam tos likt pašā saknē, lai vieglāk mapot Volume
 MEDIA_ROOT = '/media/'
 
+
+CELERY_TASK_ALWAYS_EAGER = True # Izstrādei, lai uzreiz izpildītu uzdevumus
+
 # CRISPY FORM TEMPLATE TAGS
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
