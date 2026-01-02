@@ -1,35 +1,29 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 <div class="content-header">
     <div class="container-fluid">
         <div class="row mb-4 align-items-center">
             <div class="col-md-4">
                 <h1 class="m-0">Tasks</h1>
             </div>
-
-            <div class="col-md-5">
-                <form method="get" action="{% url 'tasks:list' %}" class="input-group">
-                    <input type="text" name="q" class="form-control" placeholder="Meklēt uzdevumu..." value="{{ search_query }}">
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-primary" type="submit">
-                            <i class="fas fa-search"></i>
-                        </button>
-                        {% if search_query %}
-                            <a href="{% url 'tasks:list' %}" class="btn btn-outline-secondary" title="Notīrīt">
-                                <i class="fas fa-times"></i>
-                            </a>
-                        {% endif %}
-                    </div>
-                </form>
-            </div>
-
-            <!-- <div class="col-md-3 text-right">
-                <a href="{% url 'tasks:create' %}" class="btn btn-success">
-                    <i class="fas fa-plus"></i> Pievienot jaunu
-                </a>
-            </div> -->
         </div>
+    </div>
+    <div class="col-md-4">
+        <form method="get" action="{% url 'tasks:list' %}" class="input-group">
+            <input type="text" name="q" class="form-control" placeholder="Meklēt uzdevumu..." value="{{ search_query }}">
+            <div class="input-group-append">
+                <button class="btn btn-outline-primary" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+                {% if search_query %}
+                    <a href="{% url 'tasks:list' %}" class="btn btn-outline-secondary" title="Notīrīt">
+                        <i class="fas fa-times"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </form>
     </div>
 </div>
 
