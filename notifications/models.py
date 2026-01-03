@@ -4,15 +4,20 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 
 
+# class NotificationManager(models.Manager):
+#     # def for_user(self, user):
+#     #     return self.filter(receipient=user)
+    
+#     def unread(self, user):
+#         return self.filter(read=False).exclude(actor=user)
+    
+#     def read(self):
+#         return self.filter(read=True).exclude(actor=user)
+    
 class NotificationManager(models.Manager):
-    # def for_user(self, user):
-    #     return self.filter(receipient=user)
-    
     def unread(self, user):
-        return self.filter(read=False).exclude(actor=user)
-    
-    def read(self):
-        return self.filter(read=True).exclude(actor=user)
+        # Filtrējam paziņojumus, kur saņēmējs ir konkrētais lietotājs un tie nav izlasīti
+        return self.filter(receipient=user, read=False)
 
 
 class Notification(models.Model):

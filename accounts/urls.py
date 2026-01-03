@@ -11,6 +11,8 @@ from .views import (
 from . import views
 from .forms import LoginFormWithCaptcha
 from django.contrib.auth import views as auth_views
+from django.conf import settings
+from django.conf.urls.static import static
 
 app_name = 'accounts'
 
@@ -38,3 +40,6 @@ urlpatterns = [
         authentication_form=LoginFormWithCaptcha # Tagad šis strādās
     ), name='login'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

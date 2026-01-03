@@ -29,7 +29,7 @@
 
 <div class="container-fluid h-100" id="board-container">
 
-    <div class="card card-row card-secondary board-column" id="backlog">
+    <div class="card card-row card-secondary board-column" id="backlog" data-status="Backlog">
       <div class="card-header">
         <h3 class="card-title">
           Backlog
@@ -86,7 +86,7 @@
     </div>
 
 
-    <div class="card card-row card-primary board-column" id="to-do">
+    <div class="card card-row card-primary board-column" id="to-do" data-status="To Do">
       <div class="card-header">
         <h3 class="card-title">
           To Do
@@ -131,7 +131,7 @@
     </div>
 
 
-    <div class="card card-row card-default board-column" id="in-progress">
+    <div class="card card-row card-default board-column" id="in-progress" data-status="In Progress">
       <div class="card-header bg-info">
         <h3 class="card-title">
           In Progress
@@ -176,7 +176,7 @@
       </div>
     </div>
 
-    <div class="card card-row card-success board-column" id="completed">
+    <div class="card card-row card-success board-column" id="completed" data-status="Completed">
       <div class="card-header">
         <h3 class="card-title">
           Completed
@@ -243,100 +243,70 @@
     });
 
     const columns = document.querySelectorAll('.board-column');
+
     columns.forEach(column => {
+      // 1. Atļaujam "dragover", lai "drop" vispār strādātu
       column.addEventListener('dragover', (e) => {
         e.preventDefault();
-
-        column.addEventListener('drop', (e) => {
-          const taskId = e.dataTransfer.getData('text/plain');
-          const taskCard = document.querySelector(`[ data-task-id="${taskId}"]`);
-
-          //get new status
-          const newStatus = column.id.replace('-', ' ');
-          
-
-          //move the task card to the new column
-          column.querySelector('.task-list').prepend(taskCard);
-
-          //update the class or color based on column
-          taskCard.classList.remove('card-primary', 'card-secondary', 'card-light', 'card-success');
-          if(column.id === 'backlog'){
-            taskCard.classList.add('card-secondary');
-          } else if (column.id === 'to-do'){
-            taskCard.classList.add('card-primary');
-          } else if ( column.id === 'in-progress'){
-            taskCard.classList.add('card-primary');
-          }else if (column.id === 'completed'){
-            taskCard.classList.add('card-success');
-
-          }
-          
-
-          //send ajax request to update task status
-          updateTaskStatus(taskId, newStatus);
-        })
       });
-    })
 
-    //update status ajax
-    // function  updateTaskStatus(taskId, newStatus) {
-    //   fetch(`/tasks/update-task-status-ajax/${taskId}/`, {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       'X-CSRFToken': '{{ csrf_token }}',
-    //     },
-    //     body: JSON.stringify({status: newStatus}),
-    //   })
-    //   .then(response => response.json())
-    //   .then(data => {
-    //     if(data.success){
-    //       console.log('Task status updated successfully');
+      // 2. "Drop" notikums - jābūt ārpus dragover
+      column.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const taskId = e.dataTransfer.getData('text/plain');
+        const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
+        
+        if (!taskCard) return;
 
-    //     }else{
-    //       console.error('Error updating task status')
-    //     }
-    //   });
-    // }
+        // Iegūstam jauno statusu no ID (piem. "to-do" -> "to do")
+        const newStatus = column.id.replace('-', ' ');
+
+
+        // Vizuāli pārvietojam kartīti
+        const taskList = column.querySelector('.task-list');
+        taskList.prepend(taskCard);
+
+        // Atjaunojam krāsas
+        taskCard.classList.remove('card-primary', 'card-secondary', 'card-light', 'card-success');
+        if(column.id === 'backlog'){
+          taskCard.classList.add('card-secondary');
+        } else if (column.id === 'to-do' || column.id === 'in-progress'){
+          taskCard.classList.add('card-primary');
+        } else if (column.id === 'completed'){
+          taskCard.classList.add('card-success');
+        }
+
+        // IZSAUCAM AJAX
+        updateTaskStatus(taskId, newStatus);
+        
+        // Atjaunojam numerāciju
+        updateTaskCounters();
+      });
+    });
+
 function updateTaskStatus(taskId, newStatus) {
-    console.log("Sūtam uz serveri:", taskId, newStatus); // Pārbaudi konsolē (F12)
+    console.log("Sūtam uz serveri:", taskId, newStatus);
 
     fetch(`/tasks/update-task-status-ajax/${taskId}/`, {
         method: 'POST',
         headers: {
+            // Svarīgi: sūtot teksta datus, šis ir drošākais veids
             'Content-Type': 'application/x-www-form-urlencoded',
             'X-CSRFToken': '{{ csrf_token }}'
         },
-        body: `status=${newStatus}`
+        // encodeURIComponent palīdzēs ar "to do" atstarpēm
+        body: `status=${encodeURIComponent(newStatus)}`
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) { // Nomainīts no data.status uz data.success
-            console.log("Statuss atjaunots datubāzē!");
+        if (data.success) {
+            console.log("Veiksmīgi saglabāts DB:", data.status);
         } else {
-            console.error("Serveris nesaglabāja:", data.error);
+            console.error("Servera kļūda:", data.error);
         }
     })
-    .catch(error => console.error("Network error:", error));
+    .catch(error => console.error("Tīkla kļūda:", error));
 }
-  // function updateTaskStatus(taskId, newStatus) {
-  //     // newStatus vērtība nāk no kolonnas ID (piem. 'todo', 'inprogress')
-  //     fetch(`/tasks/update-task-status-ajax/${taskId}/`, {
-  //         method: 'POST',
-  //         headers: {
-  //             'Content-Type': 'application/x-www-form-urlencoded',
-  //             'X-CSRFToken': '{{ csrf_token }}' // Obligāti drošībai
-  //         },
-  //         body: `status=${newStatus}`
-  //     })
-  //     .then(response => response.json())
-  //     .then(data => {
-  //         if (data.status === 'success') {
-  //             console.log("Statuss atjaunots datubāzē!");
-  //         }
-  //     });
-  // }
-
 
     //submitting form on enter key
     const taskForm = document.getElementById('create-task-form');
@@ -446,19 +416,6 @@ function updateTaskStatus(taskId, newStatus) {
     //open a modal 
     const taskUpdateModal = document.getElementById('taskUpdateModal');
     let currentTaskId = null;
-
-   // event delegation to handle clicks on the pencil
-   /*const kanbanBoard = document.getElementById('board-container');
-   kanbanBoard.addEventListener("click", function(event){
-    if (event.target.closest('.fa-pen')){
-      const taskCard = event.target.closest('.task-card');
-      const taskId = taskCard.getAttribute("data-task-id");
-
-      //open modal here
-      openTaskModal(taskId)
-    }
-   });
-*/
 
   const kanbanBoard = document.getElementById('board-container');
    kanbanBoard.addEventListener("click", function(event){

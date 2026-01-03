@@ -358,17 +358,19 @@
 
                   {% for notification in latest_notifications %}
                   <!-- notifications -->
-                  <div class="direct-chat-msg">
-                    <div class="direct-chat-infos clearfix">                        
-                      <span class="direct-chat-timestamp float-right">{{ notification.notification_time_formatted }}</span>
-                    </div>
-                    <!-- /.notification-infos -->
-                    <img class="direct-chat-img" src="{{notification.actor.profile.profile_picture_url }}" alt="message user image">
-                    <!-- /.notification-img -->
-                    <div class="direct-chat-text">
-                      {{ notification.verb }}
-                    </div>
-                  </div> 
+
+
+                  <div class="direct-chat-msg {% if not notification.read %}text-bold{% endif %}">
+                      <div class="direct-chat-infos clearfix">
+                          <span class="direct-chat-name float-left">{{ notification.actor.username }}</span>
+                          <span class="direct-chat-timestamp float-right">{{ notification.created_at|timesince }} ago</span>
+                      </div>
+                      <img class="direct-chat-img" src="{{ notification.actor.profile.profile_picture_url }}" alt="user image">
+                      <div class="direct-chat-text {% if not notification.read %}bg-primary{% endif %}">
+                          {{ notification.verb }}
+                      </div>
+                  </div>
+
                      <!--end of first notification  -->
                      {% endfor %}
 
@@ -380,9 +382,8 @@
               <div class="card-footer text-center">
                 <a href="{% url "notifications:notification-list" %}">See All Notifications</a>
               </div>
-              <!-- /.card-footer --
+              <!-- /.card-footer -->
               
-              <!-- /.card-footer-->
             </div>
             <!--/.direct-chat -->
           </div>

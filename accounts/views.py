@@ -13,7 +13,7 @@ from .models import Profile
 from teams.models import Team
 from .forms import RegisterForm, ProfileUpdateForm
 from comments.models import Comment
-
+from django.db.models import Q
 
 # user registration
 @login_not_required
@@ -40,8 +40,8 @@ class PasswordChangeView(PasswordChangeView):
 class DashboardView(View):
     def get(self, request, *args, **kwargs):
         user = request.user
-               
-
+        
+        # 1. Datu atlase atkarībā no lietotāja lomas
         if user.is_superuser:
             latest_projects = Project.objects.all()
             latest_tasks = Task.objects.all()
@@ -55,20 +55,29 @@ class DashboardView(View):
             ).distinct()
             team_count = user.teams.all().count()
 
-        
-        context = {}
-        latest_notifications = user.notifications.unread(user)
-        context["latest_notifications"] = latest_notifications[:3]
-        context["notification_count"] = latest_notifications.count()
-        context["latest_projects"] = latest_projects[:5]
-        context["latest_project_count"] = latest_projects.count()
-        context["projects_near_due_date"] = latest_projects.due_in_two_days_or_less()[:5]
-        context["latest_task_count"] = latest_tasks.count()
-        context["latest_members"] = latest_members[:8]
-        context["latest_member_count"] = latest_members.count()
-        context["team_count"] = team_count
-        context["header_text"] = "Dashboard"
-        context["title"] = "Dashboard"
+        # 2. Konteksta sagatavošana
+        context = {
+            "title": "Dashboard",
+            "header_text": "Dashboard",
+            
+            # PAZIŅOJUMI
+            # Skaitītājam izmantojam tikai neizlasītos
+            "notification_count": user.notifications.unread(user).count(),
+            # Sarakstam Dashboard logā izmantojam vēsturi (pēdējos 5)
+            "latest_notifications": user.notifications.all().order_by('-created_at')[:5],
+            
+            # PROJEKTI UN TASKS
+            "latest_projects": latest_projects[:5],
+            "latest_project_count": latest_projects.count(),
+            "projects_near_due_date": latest_projects.due_in_two_days_or_less()[:5],
+            "latest_task_count": latest_tasks.count(),
+            
+            # BIEDRI
+            "latest_members": latest_members[:8],
+            "latest_member_count": latest_members.count(),
+            "team_count": team_count,
+        }
+
         return render(request, "accounts/dashboard.html", context)
 
 
@@ -181,13 +190,6 @@ class ProfileUpdateView(UpdateView):
         context["header_text"] = "Update Profile"
         context["title"] = "Update Profile"
         return context
-
-from django.shortcuts import render
-from django.db.models import Q
-
-from projects.models import Project
-from teams.models import Team
-
 
 def global_search(request):
     query = request.GET.get('q', '')

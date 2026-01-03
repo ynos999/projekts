@@ -4,7 +4,8 @@
 {% load crispy_forms_tags %}
 {% block content %}
 
-<form method="post" entype="multipart/form-data">
+<!-- <form method="post" entype="multipart/form-data"> -->
+<form method="post" enctype="multipart/form-data"></form>
     {% csrf_token %}
 <div class="row">
     <div class="col-md-6">

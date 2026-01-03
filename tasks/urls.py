@@ -24,10 +24,11 @@ urlpatterns = [
 
     # 2. AJAX operācijas (Datiem fonā)
     # Pārliecinies, ka tavā kanbanboard.html JavaScript tagad izmanto šīs adreses!
-    path('ajax/status-update/<uuid:task_id>/', views.update_task_status_ajax, name='update-task-status-ajax'),
+    
     path('ajax/create/', views.create_task_ajax, name="create-task-ajax"),
     path('ajax/get/<uuid:task_id>/', views.get_task, name="get_task"),
     path('ajax/assign-user/<uuid:task_id>/', views.assign_user_to_task, name="assign-user"),
     path('ajax/assignment-form/<uuid:task_id>/', views.get_task_assignment_form, name="assignment-form"),
+    path('update-task-status-ajax/<uuid:task_id>/', views.update_task_status_ajax, name='update-task-status-ajax'),
 
 ]

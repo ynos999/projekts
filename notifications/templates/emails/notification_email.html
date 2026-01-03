@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Sveiki, {{ user.username }}!</h2>
+    <p>{{ verb }}</p>
+    {% if project %}
+        <p>Projekts: <strong>{{ project.name }}</strong></p>
+    {% endif %}
+    <br>
+    <a href="http://{{ domain }}/notifications/" class="button">Skatīt paziņojumu</a>
+    <p>Paldies, <br> Swifthub komanda</p>
+</body>
+</html>

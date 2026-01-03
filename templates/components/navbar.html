@@ -67,7 +67,7 @@
       </li> -->
 
       <!-- Notifications Dropdown Menu -->
-      <li class="nav-item dropdown">
+      <!-- <li class="nav-item dropdown">
         <a class="nav-link" data-toggle="dropdown" href="#">
           <i class="far fa-bell"></i>
           <span class="badge badge-warning navbar-badge">{{ notification_count }}</span>
@@ -86,6 +86,29 @@
 
           <a href="{% url "notifications:notification-list" %}" class="dropdown-item dropdown-footer">See All Notifications</a>
         </div>
+      </li> -->
+      <li class="nav-item dropdown">
+          <a class="nav-link" data-toggle="dropdown" href="#">
+              <i class="far fa-bell"></i>
+              {% if notification_count > 0 %}
+                  <span class="badge badge-danger navbar-badge">{{ notification_count }}</span>
+              {% endif %}
+          </a>
+          <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+              <span class="dropdown-item dropdown-header">{{ notification_count }} Paziņojumi</span>
+              <div class="dropdown-divider"></div>
+              
+              {% for n in latest_notifications %}
+                  <a href="{% url 'notifications:notification-list' %}" class="dropdown-item">
+                      <i class="fas fa-envelope mr-2"></i> {{ n.verb|truncatechars:30 }}
+                  </a>
+                  <div class="dropdown-divider"></div>
+              {% empty %}
+                  <span class="dropdown-item text-center text-muted">Nav jaunu paziņojumu</span>
+              {% endfor %}
+              
+              <a href="{% url 'notifications:notification-list' %}" class="dropdown-item dropdown-footer">Skatīt visus</a>
+          </div>
       </li>
 
 

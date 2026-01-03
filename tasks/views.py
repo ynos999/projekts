@@ -4,7 +4,7 @@ import json
 from django.http import JsonResponse
 from .models import Task
 from projects.models import Project
-from .forms import TaskUpdateForm, TaskUserAssignmentForm
+from .forms import TaskUpdateForm, TaskUserAssignmentForm, TaskForm
 from notifications.tasks import create_notification
 
 from django.views.generic import CreateView, ListView
@@ -20,38 +20,37 @@ from datetime import datetime
 
 
 @require_POST
-
 @csrf_exempt
 def update_task_status_ajax(request, task_id):
     if request.method == "POST":
         task = get_object_or_404(Task, id=task_id)
-        new_status_slug = request.POST.get('status')
+        raw_status = request.POST.get('status', '').lower().strip()
         
-        # DEBUG: Redzēsi terminālī, ko tieši atsūta JS
-        print(f"DEBUG: Saņemts statusa slug: '{new_status_slug}'")
-
+        # Apvienota un droša vārdnīca
         status_map = {
             'backlog': 'Backlog',
             'todo': 'To Do',
-            'to do': 'To Do',         # Pievienots šis
+            'to do': 'To Do',
             'inprogress': 'In Progress',
-            'in progress': 'In Progress', # Pievienots šis
-            'completed': 'Completed'
+            'in progress': 'In Progress',
+            'completed': 'Completed',
+            'done': 'Completed'
         }
         
-        new_status = status_map.get(new_status_slug)
+        new_status = status_map.get(raw_status)
         
         if new_status:
             task.status = new_status
             task.save()
-            print(f"DEBUG: Veiksmīgi saglabāts: {new_status}")
-            return JsonResponse({'success': True, 'status': task.status})
-        else:
-            print(f"DEBUG: KĻŪDA! '{new_status_slug}' nav atrodams status_map")
-            return JsonResponse({'success': False, 'error': f'Invalid status: {new_status_slug}'}, status=400)
+            # Šis print apstiprinās, ka DB operācija notika
+            print(f"DEBUG: Veiksmīgi saglabāts DB: ID {task.id} -> {task.status}")
+            return JsonResponse({'success': True, 'new_status': task.status})
+        
+        print(f"DEBUG: KĻŪDA! '{raw_status}' netika atrasts status_map")
+        return JsonResponse({'success': False, 'error': f'Invalid status: {raw_status}'}, status=400)
             
     return JsonResponse({'success': False}, status=405)
-    
+
 
 @require_POST
 def create_task_ajax(request):
@@ -137,7 +136,7 @@ def assign_user_to_task(request, task_id):
         verb = f"Dear {task_user_profile.full_name}, {task.name} is assigned to you. Kindly take neccessary steps to attend to it."
         object_id = task.id
         
-        create_notification.delay(
+        create_notification(
                             actor_username =actor_username, 
                             verb=verb, 
                             object_id=object_id, 
@@ -208,17 +207,31 @@ class ActiveTaskListView(TaskListView):
         # Papildus filtrējam, lai rādītu tikai nepabeigtos
         return super().get_queryset().exclude(status='Completed')
 
+
 class TaskCreateView(LoginRequiredMixin, CreateView):
     model = Task
-    # Pievienotie lauki: description, priority, start_date, due_date
-    fields = ['name', 'project', 'user_assigned_to','description', 'priority', 'status','start_date', 'due_date']
+    form_class = TaskUpdateForm  # Izmanto jau importēto formu
+    # form_class = TaskForm
     template_name = 'tasks/task_form.html'
     success_url = reverse_lazy('tasks:list')
 
     def form_valid(self, form):
-        # Automātiski piesaistām ielogojušos lietotāju kā owner
         form.instance.owner = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        
+        # Paziņojuma nosūtīšana
+        actor_username = self.request.user.username
+        verb = f'Tev piešķirts jauns uzdevums: {self.object.name}'
+
+        create_notification(
+            actor_username=actor_username,
+            verb=verb,
+            object_id=self.object.id,
+            content_type_model="task",
+            content_type_app_label="tasks"
+        )
+        
+        return response
 
 
 class TaskDeleteView(LoginRequiredMixin, DeleteView):

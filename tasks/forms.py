@@ -7,7 +7,8 @@ from projects.utils import STATUS_CHOICES, PRIORITY_CHOICES
 
 class TaskUpdateForm(forms.ModelForm):
     # hidden input
-    task_id = forms.CharField(widget=forms.HiddenInput(), required=True)
+    task_id = forms.CharField(widget=forms.HiddenInput(), required=False)
+
 
     description = forms.CharField(
         widget= forms.Textarea(
@@ -44,7 +45,8 @@ class TaskUpdateForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        fields = ['name', 'description', 'priority', 'start_date', 'due_date']
+        # fields = ['name', 'description', 'priority', 'start_date', 'due_date']
+        fields = ['name', 'project', 'user_assigned_to', 'description', 'priority', 'status', 'start_date', 'due_date']
 
 
 class TaskUserAssignmentForm(forms.ModelForm):
@@ -77,5 +79,13 @@ class TaskUserAssignmentForm(forms.ModelForm):
                 self.fields['user_assigned_to'].queryset = task.project.team.members.all()
             except Task.DoesNotExist:
                 self.fields['user_assigned_to'].queryset = User.objects.none()
-
                 
+class TaskForm(forms.ModelForm):
+    class Meta:
+        model = Task
+        # Šeit obligāti jābūt 'project', ja Tu to izmanto template rindiņā 25
+        fields = ['name', 'project', 'user_assigned_to', 'description', 'priority', 'status','start_date', 'due_date']
+        widgets = {
+            'start_date': DatePicker(attrs={'append': 'fa fa-calendar', 'icon_toggle': True}),
+            'due_date': DatePicker(attrs={'append': 'fa fa-calendar', 'icon_toggle': True}),
+        }

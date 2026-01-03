@@ -14,6 +14,7 @@ from notifications.tasks import create_notification
 from django.db.models import Q, CharField
 from django.db.models.functions import Cast
 from datetime import datetime
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 
@@ -50,7 +51,7 @@ class ProjectCreateView(CreateView):
         actor_username = self.request.user.username
         verb = f'New Project Assignment, {self.object.name}'
 
-        create_notification.delay(
+        create_notification(
             actor_username=actor_username,
             verb=verb,
             object_id=self.object.id,
@@ -68,36 +69,40 @@ class ProjectListView(ListView):
     template_name = "projects/project_list.html"
     paginate_by = 5
 
-    def get_queryset(self):
-        # 1. Pamata queryset
-        queryset = Project.objects.for_user(self.request.user)
-        
-        query = self.request.GET.get('q')
-        
-        if query:
-            # 2. Mēģinām pārvērst ievadīto tekstu (DD.MM.YYYY) uz datubāzes datumu (YYYY-MM-DD)
-            parsed_date = None
-            try:
-                parsed_date = datetime.strptime(query, "%d.%m.%Y").strftime("%Y-%m-%d")
-            except ValueError:
-                pass
+def get_queryset(self):
+    # 1. Pamata queryset - atļaujam gan īpašniekam, gan komandas biedriem
+    # Pārliecinies, ka Q ir importēts (from django.db.models import Q)
+    queryset = Project.objects.filter(
+        Q(owner=self.request.user) | Q(team__members=self.request.user)
+    ).distinct()
+    
+    query = self.request.GET.get('q')
+    
+    if query:
+        parsed_date = None
+        try:
+            parsed_date = datetime.strptime(query, "%d.%m.%Y").strftime("%Y-%m-%d")
+        except ValueError:
+            pass
 
-            # 3. Veicam meklēšanu
-            # Annotate vajadzīgs, lai meklētu daļēju datumu (piem. tikai "2026")
-            queryset = queryset.annotate(
-                due_date_str=Cast('due_date', CharField())
-            ).filter(
-                Q(name__icontains=query) | 
-                Q(description__icontains=query) |
-                Q(due_date_str__icontains=query)
+        # Filtrējam jau paplašināto queryset
+        queryset = queryset.annotate(
+            due_date_str=Cast('due_date', CharField())
+        ).filter(
+            Q(name__icontains=query) | 
+            Q(description__icontains=query) |
+            Q(due_date_str__icontains=query)
+        )
+
+        if parsed_date:
+            # Pievienojam datuma sakritību, saglabājot piekļuves tiesības
+            date_queryset = Project.objects.filter(
+                Q(owner=self.request.user) | Q(team__members=self.request.user),
+                due_date=parsed_date
             )
+            queryset |= date_queryset
 
-            # 4. Ja lietotājs ievadīja precīzu datumu (ar punktiem), pievienojam to rezultātiem
-            if parsed_date:
-                # Izmantojam |= lai apvienotu (OR) rezultātus
-                queryset |= Project.objects.for_user(self.request.user).filter(due_date=parsed_date)
-
-        return queryset.distinct().order_by('-created_at')
+    return queryset.distinct().order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         context = super(ProjectListView, self).get_context_data(**kwargs)
@@ -274,44 +279,51 @@ class ProjectDeleteView(DeleteView):
         return super().post(request, *args, **kwargs)
 
 
-class ProjectDetailView(DetailView):
+class ProjectDetailView(LoginRequiredMixin, DetailView):
     model = Project
-    template_name = "projects/project_detail.html"
-    context_object_name = "project"
+    template_name = 'projects/project_detail.html'
+    context_object_name = 'project' # Labāka prakse template piekļuvei
+
+    def get_queryset(self):
+        # Šis filtrē, kurus objektus lietotājs vispār drīkst redzēt
+        from django.db.models import Q
+        return Project.objects.filter(
+            Q(owner=self.request.user) | Q(team__members=self.request.user)
+        ).select_related('owner').prefetch_related('team__members').distinct()
 
     def get_context_data(self, **kwargs):
-        # latest notifications
-        context = super(ProjectDetailView, self).get_context_data(**kwargs)
-        latest_notifications = self.request.user.notifications.unread(
-            self.request.user)
-        project = self.get_object()
+        context = super().get_context_data(**kwargs)
+        # Izmantojam jau ielādēto objektu
+        project = self.object 
+        
+        # Paziņojumi (pārliecinies, ka models.py ir salabots, kā runājām sākumā)
+        unread_notifications = self.request.user.notifications.filter(read=False)
+
         comments = Comment.objects.filter_by_instance(project)
         paginator = Paginator(comments, 5)
         page_number = self.request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-
-        context["latest_notifications"] = latest_notifications[:3]
-        context["notification_count"] = latest_notifications.count()
-        context["header_text"] = "Project Detail"
-        context["title"] = project.name
-        context["my_company"] = "Swifthub"
-        context["my_company_description"] = """
-            Swifthub is a robust Project Management System that streamlines task tracking, 
-            team collaboration, and progress monitoring, ensuring projects stay on track and 
-            deadlines are met efficiently.
-        """
-        context["page_obj"] = page_obj
-        context["comments_count"] = comments.count()
-        context["comment_form"] = CommentForm()
-        context["attachment_form"] = AttachmentForm()
+        
+        context.update({
+            "latest_notifications": unread_notifications[:3],
+            "notification_count": unread_notifications.count(),
+            "title": project.name,
+            "page_obj": paginator.get_page(page_number),
+            "comments_count": comments.count(),
+            "comment_form": CommentForm(),
+            "attachment_form": AttachmentForm(),
+        })
         return context
 
     def post(self, request, *args, **kwargs):
-        project = self.get_object()
-        if request.user not in project.team.members.all():
-            messages.warning(
-                request, "You are not a member of this project and you cannot comment")
-            return self.get(request, *args, **kwargs)
+        # Svarīgi: self.get_object() izmantos get_queryset filtrus
+        # Ja lietotājam nav piekļuves, šeit uzreiz būs 404
+        try:
+            self.object = self.get_object()
+        except:
+            messages.error(request, "Jums nav piekļuves šim projektam.")
+            return redirect('projects:list')
+
+        project = self.object
 
         if 'comment_submit' in request.POST:
             form = CommentForm(request.POST)
@@ -321,40 +333,107 @@ class ProjectDetailView(DetailView):
                 comment.content_object = project
                 comment.save()
 
-                # send notification
-                actor_username = self.request.user.username
-                actor_full_name = self.request.user.profile.full_name
-                verb = f'{actor_full_name}, commented on {project.name}'
-
-                create_notification.delay(
-                    actor_username=actor_username,
-                    verb=verb,
+                # Paziņojuma izveide
+                create_notification(
+                    actor_username=request.user.username,
+                    verb=f'{request.user.profile.full_name or request.user.username} komentēja projektu {project.name}',
                     object_id=project.id,
                     content_type_model="project",
                     content_type_app_label="projects"
                 )
-                messages.success(
-                    request, "Your comment has been added successfully")
+                messages.success(request, "Komentārs pievienots.")
                 return redirect('projects:project-detail', pk=project.pk)
-            else:
-                messages.warning(request, form.errors.get(
-                    "comment", ["An unknown error occured."])[0])
 
-        if 'attachment_submit' in request.POST:
-            attachment_form = AttachmentForm(request.POST, request.FILES)
-            if attachment_form.is_valid():
-                attachment = attachment_form.save(commit=False)
-                attachment.project = project
-                attachment.user = request.user
-                attachment.save()
-                messages.success(
-                    request, "Your file has been uploaded successfully")
-                return redirect('projects:project-detail', pk=project.pk)
-            else:
-                messages.error(
-                    request, "Error uploading the file, please try again later")
-
+        # ... pārējā post loģika pielikumiem ...
         return self.get(request, *args, **kwargs)
+    
+# class ProjectDetailView(LoginRequiredMixin, DetailView):
+#     model = Project
+#     template_name = 'projects/project_detail.html'
+    
+#     def get_queryset(self):
+#         # Atļaujam piekļuvi, ja lietotājs ir īpašnieks VAI komandas biedrs
+#         from django.db.models import Q
+#         return Project.objects.filter(
+#             Q(owner=self.request.user) | Q(team__members=self.request.user)
+#         ).distinct()
+
+#     def get_context_data(self, **kwargs):
+#         # latest notifications
+#         context = super(ProjectDetailView, self).get_context_data(**kwargs)
+#         latest_notifications = self.request.user.notifications.unread(
+#             self.request.user)
+#         project = self.get_object()
+#         comments = Comment.objects.filter_by_instance(project)
+#         paginator = Paginator(comments, 5)
+#         page_number = self.request.GET.get('page')
+#         page_obj = paginator.get_page(page_number)
+
+#         context["latest_notifications"] = latest_notifications[:3]
+#         context["notification_count"] = latest_notifications.count()
+#         context["header_text"] = "Project Detail"
+#         context["title"] = project.name
+#         context["my_company"] = "Swifthub"
+#         context["my_company_description"] = """
+#             Swifthub is a robust Project Management System that streamlines task tracking, 
+#             team collaboration, and progress monitoring, ensuring projects stay on track and 
+#             deadlines are met efficiently.
+#         """
+#         context["page_obj"] = page_obj
+#         context["comments_count"] = comments.count()
+#         context["comment_form"] = CommentForm()
+#         context["attachment_form"] = AttachmentForm()
+#         return context
+
+#     def post(self, request, *args, **kwargs):
+#         project = self.get_object()
+#         if request.user not in project.team.members.all():
+#             messages.warning(
+#                 request, "You are not a member of this project and you cannot comment")
+#             return self.get(request, *args, **kwargs)
+
+#         if 'comment_submit' in request.POST:
+#             form = CommentForm(request.POST)
+#             if form.is_valid():
+#                 comment = form.save(commit=False)
+#                 comment.user = request.user
+#                 comment.content_object = project
+#                 comment.save()
+
+#                 # send notification
+#                 actor_username = self.request.user.username
+#                 actor_full_name = self.request.user.profile.full_name
+#                 verb = f'{actor_full_name}, commented on {project.name}'
+
+#                 create_notification(
+#                     actor_username=actor_username,
+#                     verb=verb,
+#                     object_id=project.id,
+#                     content_type_model="project",
+#                     content_type_app_label="projects"
+#                 )
+#                 messages.success(
+#                     request, "Your comment has been added successfully")
+#                 return redirect('projects:project-detail', pk=project.pk)
+#             else:
+#                 messages.warning(request, form.errors.get(
+#                     "comment", ["An unknown error occured."])[0])
+
+#         if 'attachment_submit' in request.POST:
+#             attachment_form = AttachmentForm(request.POST, request.FILES)
+#             if attachment_form.is_valid():
+#                 attachment = attachment_form.save(commit=False)
+#                 attachment.project = project
+#                 attachment.user = request.user
+#                 attachment.save()
+#                 messages.success(
+#                     request, "Your file has been uploaded successfully")
+#                 return redirect('projects:project-detail', pk=project.pk)
+#             else:
+#                 messages.error(
+#                     request, "Error uploading the file, please try again later")
+
+#         return self.get(request, *args, **kwargs)
 
 
 class KanbanBoardView(DetailView):

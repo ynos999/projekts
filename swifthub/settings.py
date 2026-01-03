@@ -87,6 +87,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'notifications.context_processors.notification_context',
             ],
         },
     },
@@ -189,11 +190,14 @@ STATICFILES_DIRS = [
 ]
 
 # URL, ko redzēs pārlūkprogrammā (piem., /media/bildes/foto.jpg)
+
 MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 # Absolūtais ceļš konteinerā, kur faili tiks saglabāti
 # Tāpat kā static, mēs gribam tos likt pašā saknē, lai vieglāk mapot Volume
-MEDIA_ROOT = '/media/'
+# MEDIA_ROOT = '/media/'
 
 
 CELERY_TASK_ALWAYS_EAGER = True # Izstrādei, lai uzreiz izpildītu uzdevumus

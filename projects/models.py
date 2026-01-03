@@ -6,6 +6,9 @@ from django.contrib.auth.models import User
 from teams.models import Team
 from .utils import STATUS_CHOICES, PRIORITY_CHOICES
 
+from django.contrib.contenttypes.fields import GenericRelation
+from notifications.models import Notification
+
 
 
 class ProjectQueryset(models.QuerySet):
@@ -54,7 +57,7 @@ class Project(models.Model):
     client_company = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="To Do")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="Medium")
-
+    
     # budget details
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     amount_spent = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, blank=True, null=True)
@@ -66,6 +69,7 @@ class Project(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = ProjectManager()
+    notifications = GenericRelation(Notification)
 
 
     def __str__(self):

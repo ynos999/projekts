@@ -61,7 +61,42 @@
 {% include "components/javascript.html" %}
 
 {% block script %}
+<script>
+    function checkNotifications() {
+        // Mēs vēršamies pie jauna URL, ko tūlīt izveidosim
+        fetch('/notifications/unread-count/') 
+            .then(response => {
+                if (!response.ok) throw new Error('Network error');
+                return response.json();
+            })
+            .then(data => {
+                // Atrod skaitītāju. Atkarībā no Tava navbar, 
+                // ID var būt 'notification-badge' vai klase '.navbar-badge'
+                const badge = document.getElementById('notification-badge') || document.querySelector('.navbar-badge');
+                
+                if (badge) {
+                    badge.innerText = data.unread_count;
+                    
+                    // Ja jaunu paziņojumu nav, paslēpjam skaitītāju, ja ir - parādām
+                    if (data.unread_count > 0) {
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
 
+    // Pārbaudīt ik pēc 30 sekundēm
+    setInterval(checkNotifications, 30000);
+    
+    // Pārbaudīt arī uzreiz, kad lapa ielādējas
+    document.addEventListener('DOMContentLoaded', checkNotifications);
+</script>
 {% endblock %}
 </body>
 </html>
+
+
+

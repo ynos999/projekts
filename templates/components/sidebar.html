@@ -46,7 +46,30 @@
               </li>
 
                 <!-- Projects -->
-                <li class="nav-item">
+                 <li class="nav-item">
+                    <a href="#" class="nav-link {% if request.resolver_match.app_name == 'projects' %}active{% endif %}">
+                      <i class="nav-icon fas fa-project-diagram"></i>
+                      <p>
+                        Projects
+                        <i class="fas fa-angle-left right"></i>
+                      </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                      <li class="nav-item">
+                        <a href="{% url 'projects:list' %}" class="nav-link {% if request.resolver_match.app_name == 'projects' and request.resolver_match.url_name == 'list' %}active{% endif %}">
+                          <i class="far fa-circle nav-icon text-danger"></i>
+                          <p>All Projects</p>
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a href="{% url 'projects:create' %}" class="nav-link {% if request.resolver_match.app_name == 'projects' and request.resolver_match.url_name == 'create' %}active{% endif %}">
+                          <i class="far fa-circle nav-icon text-info"></i>
+                          <p>Add Project</p>
+                        </a>
+                      </li>
+                    </ul>
+                  </li>
+                <!-- <li class="nav-item">
                   <a href="#" class="nav-link {% if request.resolver_match.url_name == 'create'  or request.resolver_match.url_name == 'list' %}active{% endif %} ">
                     <i class="nav-icon fas fa-project-diagram"></i>
                     <p>
@@ -68,7 +91,7 @@
                       </a>
                     </li>
                   </ul>
-                </li>
+                </li> -->
 
               <!-- Teams -->
               <li class="nav-item">
@@ -96,7 +119,39 @@
               </li>
 
               <!-- Tasks -->
+
               <li class="nav-item">
+                <a href="#" class="nav-link {% if request.resolver_match.app_name == 'tasks' %}active{% endif %}">
+                  <i class="nav-icon fas fa-tasks"></i>
+                  <p>
+                    Tasks
+                    <i class="fas fa-angle-left right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <li class="nav-item">
+                    <a href="{% url 'tasks:list' %}" class="nav-link {% if request.resolver_match.app_name == 'tasks' and request.resolver_match.url_name == 'list' %}active{% endif %}">
+                      <i class="far fa-circle nav-icon text-danger"></i>
+                      <p>All Tasks</p>
+                    </a>
+                  </li>
+
+                   <li class="nav-item">
+                    <a href="{% url 'tasks:active-tasks' %}" class="nav-link {% if request.resolver_match.url_name == 'active-tasks' %}active{% endif %}">
+                      <i class="far fa-circle nav-icon text-info"></i>
+                      <p>Active Tasks</p>
+                    </a>
+                  </li>
+                  
+                  <li class="nav-item">
+                    <a href="{% url 'tasks:create' %}" class="nav-link {% if request.resolver_match.app_name == 'tasks' and request.resolver_match.url_name == 'create' %}active{% endif %}">
+                      <i class="far fa-circle nav-icon text-success"></i>
+                      <p>New Task</p>
+                    </a>
+                  </li>
+                </ul>
+              </li>
+              <!-- <li class="nav-item">
                 <a href="#" class="nav-link">
                   <i class="nav-icon fas fa-tasks"></i>
                   <p>
@@ -106,28 +161,25 @@
                 </a>
                 <ul class="nav nav-treeview">
                   <li class="nav-item">
-                    <!-- <a href="{% url 'tasks:list' %}" class="nav-link"> -->
                     <a href="{% url 'tasks:list' %}" class="nav-link {% if request.resolver_match.url_name == 'list' %}active{% endif %}">
                       <i class="far fa-circle nav-icon text-danger"></i>
                       <p>All Tasks</p>
                     </a>
                   </li>
                   <li class="nav-item">
-                    <!-- <a href="{% url 'tasks:active-tasks' %}" class="nav-link"> -->
                     <a href="{% url 'tasks:active-tasks' %}" class="nav-link {% if request.resolver_match.url_name == 'active-tasks' %}active{% endif %}">
                       <i class="far fa-circle nav-icon text-info"></i>
                       <p>Active Tasks</p>
                     </a>
                   </li>
                   <li class="nav-item">
-                    <!-- <a href="{% url 'tasks:create' %}" class="nav-link"> -->
                     <a href="{% url 'tasks:create' %}" class="nav-link {% if request.resolver_match.url_name == 'create' %}active{% endif %}">
                       <i class="far fa-circle nav-icon text-success"></i>
                       <p>New Task</p>
                     </a>
                   </li>
                 </ul>
-              </li>
+              </li> -->
 
         </ul>
       </nav>
