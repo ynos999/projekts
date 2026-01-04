@@ -1,8 +1,7 @@
 #cloud-config
 
-# ---------------------------
 # Lietotāju konfigurācija
-# ---------------------------
+
 users:
   - name: ${ssh_user}
     groups: [sudo, docker]
@@ -26,9 +25,8 @@ packages:
   - git
   - docker.io  # opcija, ja Docker no repozitorija
 
-# ---------------------------
 # Runcmd
-# ---------------------------
+
 runcmd:
   # Docker instalācija no oficiālā Docker repo
   - |

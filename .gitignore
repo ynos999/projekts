@@ -44,3 +44,4 @@ fixturas.json
 terraform.tfvars
 .terraform.lock.hcl
 .terraform
+terraform.tfstate
