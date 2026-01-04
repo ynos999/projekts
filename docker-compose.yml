@@ -31,11 +31,12 @@ services:
     container_name: projekti-web
     restart: always
     environment:
-      DEBUG: "False"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      DEBUG: "True"
       ALLOWED_HOSTS: ${ALLOWED_HOSTS}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
-      # DB_PASSWORD: ${DB_PASS}
       DB_PASS: ${DB_PASS}
       DB_HOST: postgresdb
       DB_PORT: 5432

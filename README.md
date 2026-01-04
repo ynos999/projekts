@@ -141,13 +141,26 @@ docker compose up
 
 ```
 If You use github worklows add secrets:
-DB_HOST
-DB_NAME
-DB_USER
-DB_PASS
-TUNNEL_TOKEN
-SECRET_KEY
-EMAIL_HOST
-EMAIL_HOST_USER
-EMAIL_PASS
+          ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+          RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
+          RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+          EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+          EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
+          DEFAULT_FROM_EMAIL: ${{ secrets.EMAIL_HOST_USER }}
+          TEST_TUNNEL_TOKEN: ${{ secrets.TUNNEL_TOKEN }}
+          HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+          FIXTURES_DATA: ${{ secrets.FIXTURES_DATA }}
+```
+
+```
+docker exec projekti-web python manage.py shell -c "from django.conf import settings; print(f'DEBUG: {settings.DEBUG}'); print(f'ALLOWED_HOSTS: {settings.ALLOWED_HOSTS}'); print(f'CSRF_ORIGINS: {settings.CSRF_TRUSTED_ORIGINS}')"
+
+
+docker exec projekti-web python manage.py check
 ```
