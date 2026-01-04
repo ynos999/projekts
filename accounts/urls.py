@@ -14,7 +14,7 @@ urlpatterns = [
     path('search/', views.global_search, name='global-search'),
     path('password-change/', views.PasswordChangeView.as_view(), name='password-change'),
     
-    # ŠĪ RINDIŅA IR SVARĪGĀKĀ:
+    # Šī rinda piesaista MyLoginView ar Captcha formu
     path('login/', views.MyLoginView.as_view(), name='login'),
     
     path('logout/', auth_views.LogoutView.as_view(next_page='accounts:login'), name='logout'),
