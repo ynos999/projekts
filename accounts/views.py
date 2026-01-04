@@ -17,6 +17,9 @@ from django.db.models import Q
 
 from .forms import LoginFormWithCaptcha
 from django.contrib.auth.views import LoginView
+from django.contrib.auth.forms import AuthenticationForm
+from django_recaptcha.fields import ReCaptchaField
+from django_recaptcha.widgets import ReCaptchaV3
 
 # user registration
 @login_not_required
@@ -219,3 +222,7 @@ class MyLoginView(LoginView):
         # Izmantojam drošu piekļuvi iestatījumam
         context['RECAPTCHA_SITE_KEY'] = getattr(settings, 'RECAPTCHA_PUBLIC_KEY', '')
         return context
+    
+class LoginFormWithCaptcha(AuthenticationForm):
+    # Pievienojam widget=ReCaptchaV3(), lai aktivizētu v3 versiju
+    captcha = ReCaptchaField(widget=ReCaptchaV3())
