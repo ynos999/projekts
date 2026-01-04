@@ -243,8 +243,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Tāpat kā static, mēs gribam tos likt pašā saknē, lai vieglāk mapot Volume
 # MEDIA_ROOT = '/media/'
 
-
-CELERY_TASK_ALWAYS_EAGER = True # Izstrādei, lai uzreiz izpildītu uzdevumus
+if DEBUG:
+    CELERY_TASK_ALWAYS_EAGER = True
+else:
+    CELERY_TASK_ALWAYS_EAGER = False # Ļauj strādāt Redis/Celery strādniekam
 
 # CRISPY FORM TEMPLATE TAGS
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
@@ -351,4 +353,4 @@ EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS') == 'True'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
-EMAIL_USE_SSL=os.getenv('EMAIL_USE_SSL')
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL') == 'True'
