@@ -291,27 +291,34 @@ LOGOUT_REDIRECT_URL = LOGIN_URL
 RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY')
 RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY')
 
-# TESTA VIDEI (kad DEBUG ir True)
-if os.getenv('DEBUG') == 'True':
-    # Šis mainīgais pasaka django-recaptcha neiet uz Google serveriem, 
-    # bet vienmēr atgriezt "True" validāciju.
-    os.environ['RECAPTCHA_TESTING'] = 'True'
+# # TESTA VIDEI (kad DEBUG ir True)
+# if os.getenv('DEBUG') == 'True':
+#     # Šis mainīgais pasaka django-recaptcha neiet uz Google serveriem, 
+#     # bet vienmēr atgriezt "True" validāciju.
+#     os.environ['RECAPTCHA_TESTING'] = 'True'
 
     
-    # Ja .env failā nav atslēgu, iestatām testa atslēgas, lai sistēma neizmet kļūdu
+#     # Ja .env failā nav atslēgu, iestatām testa atslēgas, lai sistēma neizmet kļūdu
+#     if not RECAPTCHA_PUBLIC_KEY:
+#         RECAPTCHA_PUBLIC_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
+#         RECAPTCHA_PRIVATE_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
+
+# # Produkcijas pārbaude
+# if not RECAPTCHA_PUBLIC_KEY and os.getenv('DEBUG') != 'True':
+#     print("WARNING: RECAPTCHA_PUBLIC_KEY is missing in Production!")
+
+if DEBUG:
+    os.environ['RECAPTCHA_TESTING'] = 'True'
     if not RECAPTCHA_PUBLIC_KEY:
         RECAPTCHA_PUBLIC_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
         RECAPTCHA_PRIVATE_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
-
-# Produkcijas pārbaude
-if not RECAPTCHA_PUBLIC_KEY and os.getenv('DEBUG') != 'True':
-    print("WARNING: RECAPTCHA_PUBLIC_KEY is missing in Production!")
+else:
+    # Produkcijā TESTĒŠANAI JĀBŪT FALSE
+    os.environ['RECAPTCHA_TESTING'] = 'False'
 
 # Iestatījumi
 RECAPTCHA_REQUIRED_SCORE = 0.5
 RECAPTCHA_LANGUAGE = 'lv'
-
-# Svarīgi: Ja lieto Nginx bez SSL (port 82), atstāj šo False
 RECAPTCHA_USE_SSL = False
 
 # Izmanto tieši šo nosaukumu, ko rāda kļūda:
@@ -326,11 +333,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #E pasts:
 
 # Pārbauda, vai lietot e-pastu pa īstam vai tikai izvadīt konsolē
-if os.getenv('DEBUG') == 'True':
-    # Izstrādes laikā: izvada e-pastu terminālī, nesūtot nekur
+# if os.getenv('DEBUG') == 'True':
+#     # Izstrādes laikā: izvada e-pastu terminālī, nesūtot nekur
+#     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# else:
+#     # Produkcijā: izmanto reālo SMTP
+#     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+if DEBUG:  # Izmanto jau definēto Boolean mainīgo
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 else:
-    # Produkcijā: izmanto reālo SMTP
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 EMAIL_HOST = os.getenv('EMAIL_HOST')
