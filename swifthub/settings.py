@@ -287,9 +287,6 @@ LOGOUT_URL = 'logout'
 LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = LOGIN_URL
 
-RECAPTCHA_PUBLIC_KEY = '6LcS3j8sAAAAAHOQCbi4c7iQOGHvJMdC8h1oLgRO'
-RECAPTCHA_PRIVATE_KEY = '6LcS3j8sAAAAAASMdc6bEjSnB-1NaOKmFiJbCT0c'
-
 # # Ielādējam atslēgas no .env
 # RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY')
 # RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY')
@@ -310,15 +307,15 @@ RECAPTCHA_PRIVATE_KEY = '6LcS3j8sAAAAAASMdc6bEjSnB-1NaOKmFiJbCT0c'
 # if not RECAPTCHA_PUBLIC_KEY and os.getenv('DEBUG') != 'True':
 #     print("WARNING: RECAPTCHA_PUBLIC_KEY is missing in Production!")
 
-# Iestatījumi
-RECAPTCHA_REQUIRED_SCORE = 0.5
-RECAPTCHA_LANGUAGE = 'lv'
+# # Iestatījumi
+# RECAPTCHA_REQUIRED_SCORE = 0.5
+# RECAPTCHA_LANGUAGE = 'lv'
 
-# Svarīgi: Ja lieto Nginx bez SSL (port 82), atstāj šo False
-RECAPTCHA_USE_SSL = False
+# # Svarīgi: Ja lieto Nginx bez SSL (port 82), atstāj šo False
+# RECAPTCHA_USE_SSL = False
 
-# Izmanto tieši šo nosaukumu, ko rāda kļūda:
-SILENCED_SYSTEM_CHECKS = ['django_recaptcha.recaptcha_test_key_error']
+# # Izmanto tieši šo nosaukumu, ko rāda kļūda:
+# SILENCED_SYSTEM_CHECKS = ['django_recaptcha.recaptcha_test_key_error']
 
 
 # Default primary key field type
