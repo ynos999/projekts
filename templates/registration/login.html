@@ -1,8 +1,7 @@
 {% extends "registration/auth_base.html" %}
 {% block title %}Login | {{ block.super }}{% endblock %}
 {% load crispy_forms_tags %}
-<!-- <script src="https://www.google.com/recaptcha/api.js?render={{ RECAPTCHA_SITE_KEY }}"></script> -->
-<!-- <script src="https://www.google.com/recaptcha/api.js?render=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></script> -->
+
 {% block content %}
 <div class="card-body">
   <p class="login-box-msg">Sign in to start your session</p>
@@ -10,10 +9,9 @@
   <form id="login-form" action="" method="post">
     {% csrf_token %}
     
-    {# Galvenā forma #}
+    {# Galvenā forma (django-recaptcha skriptus ielādēs automātiski) #}
     {{ form|crispy }}
     
-    {# Specifiskas Captcha kļūdas (ja crispy tās neizvada automātiski) #}
     {% if form.captcha.errors %}
       <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
         <i class="fas fa-exclamation-triangle mr-2"></i>
@@ -38,11 +36,22 @@
 </div>
 
 <script>
-  // Vienkāršs skripts, lai poga "iegrieztos" pie iesniegšanas
-  document.getElementById('login-form').onsubmit = function() {
-    document.getElementById('btn-text').classList.add('invisible');
-    document.getElementById('btn-spinner').classList.remove('d-none');
-    document.getElementById('submit-btn').disabled = true;
-  };
+  document.getElementById('login-form').addEventListener('submit', function(e) {
+    // Pārbaudām, vai HTML5 validācija ir izieta (nav tukšu lauku)
+    if (this.checkValidity()) {
+        const btnText = document.getElementById('btn-text');
+        const btnSpinner = document.getElementById('btn-spinner');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Vizuālie efekti
+        btnText.classList.add('invisible');
+        btnSpinner.classList.remove('d-none');
+
+        // Tā vietā, lai izmantotu .disabled = true (kas var salauzt Captcha v3),
+        // mēs padarām pogu "neklikšķināmu" vizuāli.
+        submitBtn.style.pointerEvents = 'none';
+        submitBtn.style.opacity = '0.7';
+    }
+  });
 </script>
 {% endblock %}
