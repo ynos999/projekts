@@ -123,26 +123,49 @@ WSGI_APPLICATION = 'swifthub.wsgi.application'
 # --------------------------
 # Datubāze
 # --------------------------
-if os.environ.get("DEBUG") == "True":
-    # Lokāli SQLite
+
+# Pārbaudām, vai esam Docker vidē (skatāmies vai ir DB_NAME)
+if os.environ.get("DB_NAME"):
+    # Docker / Production (Postgres)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME"),
+            "USER": os.environ.get("DB_USER"),
+            "PASSWORD": os.environ.get("DB_PASS"),
+            "HOST": os.environ.get("DB_HOST", "postgresdb"),
+            "PORT": os.environ.get("DB_PORT", 5432),
+        }
+    }
+else:
+    # Lokāli uz datora (SQLite)
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-else:
-    # Docker / production
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("DB_NAME"),
-            "USER": os.environ.get("DB_USER"),   # šeit jābūt projectuser
-            "PASSWORD": os.environ.get("DB_PASS"),
-            "HOST": os.environ.get("DB_HOST", "postgresdb"),
-            "PORT": os.environ.get("DB_PORT", 5432),
-        }
-    }
+
+# if os.environ.get("DEBUG") == "True":
+#     # Lokāli SQLite
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.sqlite3",
+#             "NAME": BASE_DIR / "db.sqlite3",
+#         }
+#     }
+# else:
+#     # Docker / production
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.postgresql",
+#             "NAME": os.environ.get("DB_NAME"),
+#             "USER": os.environ.get("DB_USER"),   # šeit jābūt projectuser
+#             "PASSWORD": os.environ.get("DB_PASS"),
+#             "HOST": os.environ.get("DB_HOST", "postgresdb"),
+#             "PORT": os.environ.get("DB_PORT", 5432),
+#         }
+#     }
 
 
 # DATABASES = {
@@ -288,7 +311,7 @@ RECAPTCHA_REQUIRED_SCORE = 0.5
 RECAPTCHA_LANGUAGE = 'lv'
 
 # Svarīgi: Ja lieto Nginx bez SSL (port 82), atstāj šo False
-RECAPTCHA_USE_SSL = False 
+RECAPTCHA_USE_SSL = True
 
 # Izmanto tieši šo nosaukumu, ko rāda kļūda:
 SILENCED_SYSTEM_CHECKS = ['django_recaptcha.recaptcha_test_key_error']

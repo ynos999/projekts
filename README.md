@@ -163,4 +163,7 @@ docker exec projekti-web python manage.py shell -c "from django.conf import sett
 
 
 docker exec projekti-web python manage.py check
+
+
+docker exec projekti-web python manage.py shell -c "from django.conf import settings; print(settings.DEBUG)"
 ```
