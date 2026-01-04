@@ -169,3 +169,12 @@ docker exec projekti-web python manage.py shell -c "from django.conf import sett
 
 docker exec projekti-web ls -l /usr/src/app/  # Atrodi kur ir logi
 ```
+
+docker exec -it projekti-web /bin/bash
+Or root
+docker exec -u 0 -it projekti-web /bin/bash
+
+python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
+
+
+docker cp projekti-web:/usr/src/app/fixturas.json /home/wolf

@@ -39,7 +39,7 @@ jobs:
       - name: Run Docker Compose
         # working-directory: ./
         env:
-          DEBUG: "True"
+          DEBUG: "False"
           ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
           RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
           RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
