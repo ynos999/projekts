@@ -31,6 +31,7 @@ services:
     container_name: projekti-web
     restart: always
     environment:
+      DEBUG: "False"
       HOSTS: ${HOSTS}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
