@@ -67,7 +67,10 @@ jobs:
 
         run: |
           envsubst < docker-compose.yml > docker-compose.temp.yml
-          docker compose -f docker-compose.temp.yml up -d --build --remove-orphans
+          # Apstādina un dzēš visus kontēnerus, kas nav definēti docker-compose failā
+          docker compose -f docker-compose.temp.yml down --remove-orphans
+          # PALAIŽ PA JAUNU UN PĀRBŪVĒ
+          docker compose -f docker-compose.temp.yml up -d --build
           docker image prune -a -f
           rm docker-compose.temp.yml
 
