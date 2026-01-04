@@ -6,13 +6,13 @@ services:
     container_name: projekti-postgresdb
     labels:
       - "postgresdb=true"
-    env_file:
-      - .env
+    # env_file:
+    #   - .env
     environment:
       POSTGRES_PASSWORD: ${DB_PASS}
-      POSTGRES_HOST: postgresdb
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
+      POSTGRES_HOST: postgresdb
       POSTGRES_PORT: 5432
     restart: always
     volumes:
