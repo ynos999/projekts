@@ -18,6 +18,9 @@ from django.db.models import Q, CharField
 from django.db.models.functions import Cast
 from datetime import datetime
 
+from django.core.mail import send_mail
+from django.conf import settings
+
 
 @require_POST
 @csrf_exempt
@@ -245,6 +248,12 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
             content_type_model="task",
             content_type_app_label="tasks"
         )
+        
+        if self.object.user_assigned_to and self.object.user_assigned_to.email:
+            subject = f"Jauns uzdevums: {self.object.name}"
+            message = f"Sveiki, {self.object.user_assigned_to.username}!\n\nJums ir piešķirts jauns uzdevums: '{self.object.name}' projektā '{self.object.project}'.\nTermiņš: {self.object.due_date}"
+            recipient_list = [self.object.user_assigned_to.email]
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipient_list)
         
         return response
 

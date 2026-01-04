@@ -7,17 +7,15 @@
   <p class="login-box-msg">Sign in to start your session</p>
 
   <form id="login-form" action="" method="post">
-    {% csrf_token %}
-    
-    {# Šeit Django ieliks visus laukus UN nepieciešamos skriptus no Google #}
-    {{ form|crispy }}
-    
-    <div class="mt-4">
-      <button type="submit" id="submit-btn" class="btn btn-primary btn-block shadow-sm">
-        <span id="btn-text">Login</span>
-        <span id="btn-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-      </button>
-    </div>
+      {% csrf_token %}
+      
+      {{ form.media }}  {{ form|crispy }}
+      
+      <div class="mt-4">
+        <button type="submit" id="submit-btn" class="btn btn-primary btn-block shadow-sm">
+          <span id="btn-text">Login</span>
+        </button>
+      </div>
   </form>
 </div>
 

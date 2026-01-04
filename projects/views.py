@@ -16,6 +16,9 @@ from django.db.models.functions import Cast
 from datetime import datetime
 from django.contrib.auth.mixins import LoginRequiredMixin
 
+from django.core.mail import send_mail  # Pievieno importu augšā
+from django.conf import settings
+
 
 
 class ProjectCreateView(CreateView):
@@ -58,6 +61,21 @@ class ProjectCreateView(CreateView):
             content_type_model="project",
             content_type_app_label="projects"
         )
+        
+        try:
+            subject = f"Izveidots jauns projekts: {self.object.name}"
+            message = f"Sveiki!\n\nProjekts '{self.object.name}' ir veiksmīgi izveidots.\nĪpašnieks: {actor_username}\nTermiņš: {self.object.due_date}"
+            recipient_list = [self.request.user.email] # Sūta izveidotājam
+            
+            send_mail(
+                subject, 
+                message, 
+                settings.DEFAULT_FROM_EMAIL, 
+                recipient_list,
+                fail_silently=False, # Uzstādi uz False, lai redzētu kļūdas, ja neaiziet
+            )
+        except Exception as e:
+            print(f"E-pasta sūtīšanas kļūda: {e}")
         
         # 4. Atgriežam response, kas automātiski veiks pārvirzīšanu uz success_url
         return response
