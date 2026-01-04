@@ -12,8 +12,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
-      POSTGRES_HOST: postgresdb
-      POSTGRES_PORT: 5432
+      # POSTGRES_HOST: postgresdb
+      # POSTGRES_PORT: 5432
     restart: always
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -38,8 +38,8 @@ services:
       - postgresdb
     expose:
       - "8000"
-    ports:
-      - "8000:8000"
+    # ports:
+    #   - "8000:8000"
     networks:
       - projekti
     volumes:
@@ -82,9 +82,9 @@ services:
     image: redis:7-alpine
     container_name: projekti-redis
     restart: always
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+    # environment:
+    #   - REDIS_HOST=redis
+    #   - REDIS_PORT=6379
     expose:
       - "6379"
     networks:
@@ -100,7 +100,8 @@ services:
       - PGPASSWORD=${DB_PASS}
       - DB_USER=${DB_USER}
       - DB_NAME=${DB_NAME}
-      - DB_HOST=${DB_HOST}
+      # - DB_HOST=${DB_HOST}
+      - DB_HOST=postgresdb
     entrypoint: |
       /bin/sh -c "
       echo 'Maintenance script started. Target time: 03:00 every day.'
