@@ -50,9 +50,9 @@ jobs:
           EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
           DEFAULT_FROM_EMAIL: ${{ secrets.EMAIL_HOST_USER }}
           EMAIL_USE_SSL: "False"
-          RECAPTCHA_PUBLIC_KEY = ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
-          RECAPTCHA_PRIVATE_KEY = ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
-          ALLOWED_HOSTS = ${{ secrets.ALLOWED_HOSTS }}
+          RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
+          RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
+          ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
           REDIS_HOST: "redis"
           REDIS_PORT: 6379
           

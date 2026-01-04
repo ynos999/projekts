@@ -62,20 +62,20 @@ services:
       - static_volume:/static:ro
       - media_volume:/media:ro
 
-  # cloudflared:
-  #   image: cloudflare/cloudflared:latest
-  #   container_name: projekti-cloudflared
-  #   command: tunnel --no-autoupdate run
-  #   environment:
-  #     - TUNNEL_TOKEN=${TEST_TUNNEL_TOKEN}
-  #   networks:
-  #     - projekti
-  #   restart: unless-stopped
-  #   logging:
-  #     driver: json-file
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: projekti-cloudflared
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TEST_TUNNEL_TOKEN}
+    networks:
+      - projekti
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
   redis:
     image: redis:7-alpine
     container_name: projekti-redis
