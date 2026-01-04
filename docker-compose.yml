@@ -34,6 +34,7 @@ services:
       REDIS_HOST: "redis"
       REDIS_PORT: "6379"
       DEBUG: "True"
+      SECRET_KEY: "${SECRET_KEY}"
       ALLOWED_HOSTS: ${ALLOWED_HOSTS}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}

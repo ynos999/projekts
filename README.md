@@ -166,4 +166,6 @@ docker exec projekti-web python manage.py check
 
 
 docker exec projekti-web python manage.py shell -c "from django.conf import settings; print(settings.DEBUG)"
+
+docker exec projekti-web ls -l /usr/src/app/  # Atrodi kur ir logi
 ```
