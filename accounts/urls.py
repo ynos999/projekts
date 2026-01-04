@@ -30,12 +30,10 @@ urlpatterns = [
     # change password
     path('password-change', PasswordChangeView.as_view(), name='password-change'),
 
-    path('logout/', auth_views.LogoutView.as_view(
-        next_page='accounts:login'
-    ), name='logout'),
-    
-    # ŠĪ IR VIENĪGĀ LOGIN RINDA, KAS TEV VAJADZĪGA:
+# Tikai viena login rinda!
     path('login/', MyLoginView.as_view(), name='login'),
+    
+    path('logout/', auth_views.LogoutView.as_view(next_page='accounts:login'), name='logout'),
 ]
 
 if settings.DEBUG:
