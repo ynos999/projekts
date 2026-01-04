@@ -32,7 +32,7 @@ jobs:
         # working-directory: ./
         env:
           DEBUG: "False"
-          HOSTS: "projekti.testi.lv,*"
+          HOSTS = ${{ secrets.ALLOWED_HOSTS }}
           DOCKER_HOST: tcp://localhost:2375
           POSTGRES_PORT: 5432
           DB_HOST: ${{ secrets.DB_HOST }}
@@ -47,9 +47,14 @@ jobs:
           EMAIL_USE_TLS: "True"
           EMAIL_PORT: 587
           EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
-          EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_PASS }}
+          EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
           DEFAULT_FROM_EMAIL: ${{ secrets.EMAIL_HOST_USER }}
           EMAIL_USE_SSL: "False"
+          RECAPTCHA_PUBLIC_KEY = ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
+          RECAPTCHA_PRIVATE_KEY = ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
+          ALLOWED_HOSTS = ${{ secrets.ALLOWED_HOSTS }}
+          REDIS_HOST: "redis"
+          REDIS_PORT: 6379
           
         run: |
           envsubst < docker-compose.yml > docker-compose.temp.yml
