@@ -253,7 +253,7 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
             subject = f"Jauns uzdevums: {self.object.name}"
             message = f"Sveiki, {self.object.user_assigned_to.username}!\n\nJums ir piešķirts jauns uzdevums: '{self.object.name}' projektā '{self.object.project}'.\nTermiņš: {self.object.due_date}"
             recipient_list = [self.object.user_assigned_to.email]
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipient_list)
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipient_list, fail_silently=True)
         
         return response
 
