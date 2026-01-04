@@ -288,20 +288,23 @@ LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = LOGIN_URL
 
 # Ielādējam atslēgas no .env
-RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY')
-RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY')
+RECAPTCHA_PUBLIC_KEY = '6LcS3j8sAAAAAHOQCbi4c7iQOGHvJMdC8h1oLgRO'
+RECAPTCHA_PRIVATE_KEY = '6LcS3j8sAAAAAASMdc6bEjSnB-1NaOKmFiJbCT0c'
+
+# RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY')
+# RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY')
 
 # TESTA VIDEI (kad DEBUG ir True)
-if os.getenv('DEBUG') == 'True':
-    # Šis mainīgais pasaka django-recaptcha neiet uz Google serveriem, 
-    # bet vienmēr atgriezt "True" validāciju.
-    os.environ['RECAPTCHA_TESTING'] = 'True'
+# if os.getenv('DEBUG') == 'True':
+#     # Šis mainīgais pasaka django-recaptcha neiet uz Google serveriem, 
+#     # bet vienmēr atgriezt "True" validāciju.
+#     os.environ['RECAPTCHA_TESTING'] = 'True'
 
     
-    # Ja .env failā nav atslēgu, iestatām testa atslēgas, lai sistēma neizmet kļūdu
-    if not RECAPTCHA_PUBLIC_KEY:
-        RECAPTCHA_PUBLIC_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
-        RECAPTCHA_PRIVATE_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
+#     # Ja .env failā nav atslēgu, iestatām testa atslēgas, lai sistēma neizmet kļūdu
+#     if not RECAPTCHA_PUBLIC_KEY:
+#         RECAPTCHA_PUBLIC_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
+#         RECAPTCHA_PRIVATE_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
 
 # Produkcijas pārbaude
 if not RECAPTCHA_PUBLIC_KEY and os.getenv('DEBUG') != 'True':
