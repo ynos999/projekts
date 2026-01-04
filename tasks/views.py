@@ -173,19 +173,23 @@ class TaskListView(LoginRequiredMixin, ListView):
     template_name = "tasks/task_list.html"
 
     def get_queryset(self):
-        queryset = Task.objects.filter(owner=self.request.user)
+        # 1. ŠIS IR JAUNAIS: Filtrējam gan īpašnieku, gan piesaistīto lietotāju
+        # Izmantojam Q, lai atrastu uzdevumus, kur lietotājs ir owner VAI user_assigned_to
+        queryset = Task.objects.filter(
+            Q(owner=self.request.user) | Q(user_assigned_to=self.request.user)
+        )
+        
         query = self.request.GET.get('q')
 
         if query:
-            # 1. Mēģinām saprast, vai lietotājs ievadījis datumu formātā DD.MM.YYYY
+            # Viss vecais datuma apstrādes kods paliek:
             parsed_date = None
             try:
-                # Ja izdodas konvertēt, iegūstam YYYY-MM-DD formātu meklēšanai
                 parsed_date = datetime.strptime(query, "%d.%m.%Y").strftime("%Y-%m-%d")
             except ValueError:
                 pass
 
-            # 2. Veidojam filtru
+            # Viss vecais filtra kods paliek:
             queryset = queryset.annotate(
                 due_date_str=Cast('due_date', CharField())
             ).filter(
@@ -193,12 +197,16 @@ class TaskListView(LoginRequiredMixin, ListView):
                 Q(description__icontains=query) |
                 Q(project__name__icontains=query) |
                 Q(status__icontains=query) |
-                Q(due_date_str__icontains=query) # Meklē standarta formātu (2026-01-07)
+                Q(due_date_str__icontains=query)
             )
 
-            # 3. Ja tika atpazīts datums, pievienojam to kā papildus "VAI" nosacījumu
+            # 3. Ja tika atpazīts datums, pielabojam arī šo rindu:
             if parsed_date:
-                queryset = queryset | Task.objects.filter(owner=self.request.user, due_date=parsed_date)
+                # Šeit arī pieliekam Q filtru, lai datumu meklētu starp visiem redzamajiem uzdevumiem
+                queryset = queryset | Task.objects.filter(
+                    Q(due_date=parsed_date) & 
+                    (Q(owner=self.request.user) | Q(user_assigned_to=self.request.user))
+                )
         
         return queryset.distinct().order_by('due_date')
     
@@ -241,7 +249,8 @@ class TaskDeleteView(LoginRequiredMixin, DeleteView):
     
     # Šis nodrošina, ka lietotājs var dzēst tikai savus vai projektam piesaistītos uzdevumus (pēc izvēles)
     def get_queryset(self):
-        return Task.objects.filter(owner=self.request.user)
+        return Task.objects.filter(Q(owner=self.request.user) | Q(user_assigned_to=self.request.user))
+        # return Task.objects.filter(owner=self.request.user)
 
 class TaskUpdateView(LoginRequiredMixin, UpdateView):
     model = Task
@@ -250,4 +259,5 @@ class TaskUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('tasks:list')
 
     def get_queryset(self):
-        return Task.objects.filter(owner=self.request.user)
+        return Task.objects.filter(Q(owner=self.request.user) | Q(user_assigned_to=self.request.user))
+        # return Task.objects.filter(owner=self.request.user)
