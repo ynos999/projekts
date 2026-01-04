@@ -312,7 +312,7 @@ RECAPTCHA_REQUIRED_SCORE = 0.5
 RECAPTCHA_LANGUAGE = 'lv'
 
 # Svarīgi: Ja lieto Nginx bez SSL (port 82), atstāj šo False
-RECAPTCHA_USE_SSL = True
+RECAPTCHA_USE_SSL = False
 
 # Izmanto tieši šo nosaukumu, ko rāda kļūda:
 SILENCED_SYSTEM_CHECKS = ['django_recaptcha.recaptcha_test_key_error']

@@ -1,33 +1,21 @@
 from django.urls import path
-from .views import (
-    DashboardView,
-    MembersListView,
-    RegisterView,
-    ProfileDetailView,
-    PasswordChangeView,
-    ProfileUpdateView
-)
-
-from . import views
-from .forms import LoginFormWithCaptcha
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import MyLoginView
-from accounts.views import MyLoginView
+from . import views  # Importējam visu views moduli uzreiz
 
 app_name = 'accounts'
 
 urlpatterns = [
-    path('', DashboardView.as_view(), name="dashboard"),
-    path('members/', MembersListView.as_view(), name="members-list"),
-    path('<int:pk>/user/', ProfileDetailView.as_view(), name='profile-detail'),
-    path('<int:pk>/edit/', ProfileUpdateView.as_view(), name='profile-update'),
+    path('', views.DashboardView.as_view(), name="dashboard"),
+    path('members/', views.MembersListView.as_view(), name="members-list"),
+    path('<int:pk>/user/', views.ProfileDetailView.as_view(), name='profile-detail'),
+    path('<int:pk>/edit/', views.ProfileUpdateView.as_view(), name='profile-update'),
     path('search/', views.global_search, name='global-search'),
-    path('password-change/', PasswordChangeView.as_view(), name='password-change'),
+    path('password-change/', views.PasswordChangeView.as_view(), name='password-change'),
     
-    # Tikai viena rinda pieteikšanās procesam!
-    path('login/', MyLoginView.as_view(), name='login'),
+    # Izmantojam tiešo norādi uz klasi caur 'views' moduli
+    path('login/', views.MyLoginView.as_view(), name='login'),
     
     path('logout/', auth_views.LogoutView.as_view(next_page='accounts:login'), name='logout'),
 ]

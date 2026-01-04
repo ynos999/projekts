@@ -155,9 +155,6 @@ class ProfileDetailView(DetailView):
         task_page_number = self.request.GET.get('task_page')
         tasks  = task_paginator.get_page(task_page_number)
 
-
-
-         
         context["comments"] = comments
         context["all_user_comments_count"] = all_user_comments.count()
         context["latest_notifications"] = latest_notifications[:3]
@@ -212,15 +209,13 @@ def global_search(request):
         'teams': teams,
     })
     
-
 class MyLoginView(LoginView):
     form_class = LoginFormWithCaptcha
     template_name = 'registration/login.html'
 
-    # Ieteicams pievienot šo, lai redzētu vai forma vispār tiek izmantota
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Šis palīdzēs Tev pēc tam ielādēt mainīgo veidnē, ja izmantosi manuālo skriptu
         from django.conf import settings
+        # Izmantojam drošu piekļuvi iestatījumam
         context['RECAPTCHA_SITE_KEY'] = getattr(settings, 'RECAPTCHA_PUBLIC_KEY', '')
         return context
