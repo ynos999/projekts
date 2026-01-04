@@ -9,7 +9,7 @@
   <form id="login-form" action="" method="post">
     {% csrf_token %}
     
-    {# Galvenā forma - django-recaptcha pati šeit ieliks nepieciešamos JS skriptus #}
+    {# Galvenā forma - django-recaptcha automātiski ģenerēs laukus un JS #}
     {{ form|crispy }}
     
     {% if form.captcha.errors %}
@@ -36,21 +36,21 @@
 </div>
 
 <script>
-  // Izmantojam addEventListener, lai netraucētu Captcha skriptam
+  // Izmantojam addEventListener, lai netraucētu reCAPTCHA skriptam pabeigt darbu
   document.getElementById('login-form').addEventListener('submit', function(e) {
     const form = this;
-    
-    // Pārbaudām, vai visi lauki ir aizpildīti (HTML5 validācija)
+
+    // Pārbaudām standarta HTML5 validāciju
     if (form.checkValidity()) {
       const btnText = document.getElementById('btn-text');
       const btnSpinner = document.getElementById('btn-spinner');
       const submitBtn = document.getElementById('submit-btn');
 
-      // Parādām animāciju
+      // Animācijas iedarbināšana
       btnText.classList.add('invisible');
       btnSpinner.classList.remove('d-none');
       
-      // Svarīgi: neizmantojam .disabled = true, jo tas var pārtraukt Captcha žetona piesaisti
+      // Svarīgi: neizmantojam .disabled = true, lai nebloķētu Captcha datus
       // Tā vietā neļaujam klikšķināt vēlreiz vizuāli
       submitBtn.style.pointerEvents = 'none';
       submitBtn.style.opacity = '0.7';
