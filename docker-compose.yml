@@ -32,6 +32,11 @@ services:
     restart: always
     environment:
       HOSTS: ${HOSTS}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASS}
+      DB_HOST: postgresdb
+      DB_PORT: 5432
       RECAPTCHA_PUBLIC_KEY: ${RECAPTCHA_PUBLIC_KEY}
       RECAPTCHA_PRIVATE_KEY: ${RECAPTCHA_PRIVATE_KEY}
     depends_on:
