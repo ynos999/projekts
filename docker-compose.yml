@@ -32,6 +32,8 @@ services:
     restart: always
     environment:
       HOSTS: ${HOSTS}
+      RECAPTCHA_PUBLIC_KEY: ${RECAPTCHA_PUBLIC_KEY}
+      RECAPTCHA_PRIVATE_KEY: ${RECAPTCHA_PRIVATE_KEY}
     depends_on:
       - postgresdb
     expose:
