@@ -16,6 +16,7 @@ from comments.models import Comment
 from django.db.models import Q
 
 from .forms import LoginFormWithCaptcha
+from django.contrib.auth.views import LoginView
 
 # user registration
 @login_not_required
