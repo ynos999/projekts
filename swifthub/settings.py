@@ -30,21 +30,29 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # ALLOWED_HOSTS = []
 
-DEBUG = os.environ.get("DEBUG", "True") == "True"
+# DEBUG = os.environ.get("DEBUG", "True") == "True"
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 # ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
-# 1. Atļauj visus norādītos hostus un iztīra atstarpes
-ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h.strip()]
+# Nolasi hostus no vides mainīgā (ko padod GitHub Actions)
+raw_hosts = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost")
+ALLOWED_HOSTS = [h.strip() for h in raw_hosts.split(",") if h.strip()]
 
-# 2. Obligāti Cloudflare/Proxy gadījumā
+# Obligāti Cloudflare/Proxy gadījumā
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# 3. Ja izmanto HTTPS (Cloudflare), tad nepieciešams šis:
-CSRF_TRUSTED_ORIGINS = [f"https://{h.strip()}" for h in ALLOWED_HOSTS]
 
 USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_PORT = True
+
+# Dinamiski CSRF iestatījumi (Aizstāj izdzēsto bloku)
+CSRF_TRUSTED_ORIGINS = []
+for host in ALLOWED_HOSTS:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{host}")
+    CSRF_TRUSTED_ORIGINS.append(f"http://{host}")
+    # Pievienojam arī variantu ar portu 82, jo Nginx to izmanto ārpusē
+    CSRF_TRUSTED_ORIGINS.append(f"http://{host}:82")
+
 
 # Application definition
 
@@ -181,11 +189,11 @@ USE_I18N = True
 USE_TZ = True
 
 # Pievieno savu lokālo adresi un portu
-CSRF_TRUSTED_ORIGINS = [
-    'http://127.0.0.1:82',
-    'http://localhost:82',
-    'http://projekti.test.lv'
-]
+# CSRF_TRUSTED_ORIGINS = [
+#     'http://127.0.0.1:82',
+#     'http://localhost:82',
+#     'http://projekti.test.lv'
+# ]
 
 
 # Static files (CSS, JavaScript, Images)
