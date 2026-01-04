@@ -5,37 +5,33 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
-
 ENV DEBUG=False
 ENV ENABLE_RECAPTCHA=True
 ENV PRODUCTION=True
 
-RUN apt-get update && apt-get -y install \
-    nano
+RUN apt-get update && apt-get -y install nano && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --upgrade pip
 
 WORKDIR /usr/src/app
 
-# 1. VISPIRMS izveidojam mapes
-RUN mkdir -p /static /media
+# 1. Izveidojam mapes un lietotāju (kā root)
+RUN mkdir -p /static /media && \
+    adduser --system --no-create-home --uid 9000 --group --disabled-password django
 
-# 2. TAD izveidojam lietotāju (lai chown zinātu, kas ir "django")
-RUN adduser --system --no-create-home --uid 9000 --group --disabled-password django
-
-# 3. TAGAD piešķiram tiesības
-RUN chown -R django:django /usr/src/app /static /media
-
-# 4. Sagatavojam atkarības
+# 2. Instalējam atkarības (kā root - ātrākai būvēšanai)
 COPY requirements.txt .
-COPY entrypoint.sh .
-RUN pip install -r requirements.txt
-RUN chmod +x entrypoint.sh
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Pārslēdzamies uz lietotāju pirms koda kopēšanas
+# 3. Nokopējam VISU projektu (ieskaitot entrypoint.sh un fixturas.json)
+COPY . .
+
+# 4. Svarīgākais solis: Piešķiram tiesības visam projekta saturam
+# Šis jādara PIRMS pārslēgšanās uz USER django
+RUN chown -R django:django /usr/src/app /static /media && \
+    chmod +x /usr/src/app/entrypoint.sh
+
+# 5. Tagad droši pārslēdzamies uz ierobežoto lietotāju
 USER django
-
-# 5. Nokopējam projektu (tagad tas piederēs django lietotājam)
-COPY --chown=django:django . .
 
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]

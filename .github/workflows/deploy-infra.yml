@@ -30,10 +30,11 @@ jobs:
 
       - name: Create fixtures file
         run: |
-          # Ja tavs Dockerfile atrodas saknes mapē, liec to šeit:
-          echo '${{ secrets.FIXTURES_DATA }}' > fixturas.json
-          # Ja būvēšanas konteksts prasa to citur, vari nokopēt:
-          # echo '${{ secrets.FIXTURES_DATA }}' > docker/web/fixturas.json
+          cat << 'EOF' > fixturas.json
+          ${{ secrets.FIXTURES_DATA }}
+          EOF
+          # Pārbauda, vai fails tiešām ir izveidots saknes mapē
+          ls -l fixturas.json
 
       - name: Run Docker Compose
         # working-directory: ./
