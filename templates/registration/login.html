@@ -9,7 +9,7 @@
   <form id="login-form" action="" method="post">
     {% csrf_token %}
     
-    {# Galvenā forma (django-recaptcha skriptus ielādēs automātiski) #}
+    {# Galvenā forma - django-recaptcha pati šeit ieliks nepieciešamos JS skriptus #}
     {{ form|crispy }}
     
     {% if form.captcha.errors %}
@@ -36,21 +36,24 @@
 </div>
 
 <script>
+  // Izmantojam addEventListener, lai netraucētu Captcha skriptam
   document.getElementById('login-form').addEventListener('submit', function(e) {
-    // Pārbaudām, vai HTML5 validācija ir izieta (nav tukšu lauku)
-    if (this.checkValidity()) {
-        const btnText = document.getElementById('btn-text');
-        const btnSpinner = document.getElementById('btn-spinner');
-        const submitBtn = document.getElementById('submit-btn');
+    const form = this;
+    
+    // Pārbaudām, vai visi lauki ir aizpildīti (HTML5 validācija)
+    if (form.checkValidity()) {
+      const btnText = document.getElementById('btn-text');
+      const btnSpinner = document.getElementById('btn-spinner');
+      const submitBtn = document.getElementById('submit-btn');
 
-        // Vizuālie efekti
-        btnText.classList.add('invisible');
-        btnSpinner.classList.remove('d-none');
-
-        // Tā vietā, lai izmantotu .disabled = true (kas var salauzt Captcha v3),
-        // mēs padarām pogu "neklikšķināmu" vizuāli.
-        submitBtn.style.pointerEvents = 'none';
-        submitBtn.style.opacity = '0.7';
+      // Parādām animāciju
+      btnText.classList.add('invisible');
+      btnSpinner.classList.remove('d-none');
+      
+      // Svarīgi: neizmantojam .disabled = true, jo tas var pārtraukt Captcha žetona piesaisti
+      // Tā vietā neļaujam klikšķināt vēlreiz vizuāli
+      submitBtn.style.pointerEvents = 'none';
+      submitBtn.style.opacity = '0.7';
     }
   });
 </script>
