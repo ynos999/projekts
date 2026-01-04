@@ -173,23 +173,24 @@ class TaskListView(LoginRequiredMixin, ListView):
     template_name = "tasks/task_list.html"
 
     def get_queryset(self):
-        # 1. ŠIS IR JAUNAIS: Filtrējam gan īpašnieku, gan piesaistīto lietotāju
-        # Izmantojam Q, lai atrastu uzdevumus, kur lietotājs ir owner VAI user_assigned_to
-        queryset = Task.objects.filter(
-            Q(owner=self.request.user) | Q(user_assigned_to=self.request.user)
-        )
+        # 1. Pamata filtrs (Lomas noteikšana)
+        if self.request.user.is_staff:
+            queryset = Task.objects.all()
+        else:
+            queryset = Task.objects.filter(
+                Q(owner=self.request.user) | Q(user_assigned_to=self.request.user)
+            )
         
         query = self.request.GET.get('q')
 
         if query:
-            # Viss vecais datuma apstrādes kods paliek:
             parsed_date = None
             try:
                 parsed_date = datetime.strptime(query, "%d.%m.%Y").strftime("%Y-%m-%d")
             except ValueError:
                 pass
 
-            # Viss vecais filtra kods paliek:
+            # 2. Teksta meklēšana (strādā uz jau nofiltrētā queryset)
             queryset = queryset.annotate(
                 due_date_str=Cast('due_date', CharField())
             ).filter(
@@ -200,13 +201,19 @@ class TaskListView(LoginRequiredMixin, ListView):
                 Q(due_date_str__icontains=query)
             )
 
-            # 3. Ja tika atpazīts datums, pielabojam arī šo rindu:
+            # 3. Datuma meklēšanas papildinājums
             if parsed_date:
-                # Šeit arī pieliekam Q filtru, lai datumu meklētu starp visiem redzamajiem uzdevumiem
-                queryset = queryset | Task.objects.filter(
-                    Q(due_date=parsed_date) & 
-                    (Q(owner=self.request.user) | Q(user_assigned_to=self.request.user))
-                )
+                # Šeit mēs izmantojam to pašu sākuma loģiku:
+                if self.request.user.is_staff:
+                    # Adminam meklējam datumu visā bāzē
+                    date_filter = Q(due_date=parsed_date)
+                else:
+                    # Lietotājam meklējam datumu tikai viņa atļautajos uzdevumos
+                    date_filter = Q(due_date=parsed_date) & (
+                        Q(owner=self.request.user) | Q(user_assigned_to=self.request.user)
+                    )
+                
+                queryset = queryset | Task.objects.filter(date_filter)
         
         return queryset.distinct().order_by('due_date')
     
