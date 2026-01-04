@@ -9,19 +9,9 @@
   <form id="login-form" action="" method="post">
     {% csrf_token %}
     
-    {# Galvenā forma - django-recaptcha automātiski ģenerēs laukus un JS #}
+    {# Šeit Django ieliks visus laukus UN nepieciešamos skriptus no Google #}
     {{ form|crispy }}
     
-    {% if form.captcha.errors %}
-      <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
-        <i class="fas fa-exclamation-triangle mr-2"></i>
-        {% for error in form.captcha.errors %}{{ error }}{% endfor %}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-    {% endif %}
-
     <div class="mt-4">
       <button type="submit" id="submit-btn" class="btn btn-primary btn-block shadow-sm">
         <span id="btn-text">Login</span>
@@ -29,29 +19,20 @@
       </button>
     </div>
   </form>
-
-  <p class="mt-3 mb-1">
-    <a href="{% url 'password_reset' %}">I forgot my password</a>
-  </p>
 </div>
 
 <script>
-  // Izmantojam addEventListener, lai netraucētu reCAPTCHA skriptam pabeigt darbu
+  // Izmantojam addEventListener, lai netraucētu Captcha darbībai
   document.getElementById('login-form').addEventListener('submit', function(e) {
-    const form = this;
-
-    // Pārbaudām standarta HTML5 validāciju
-    if (form.checkValidity()) {
+    if (this.checkValidity()) {
       const btnText = document.getElementById('btn-text');
       const btnSpinner = document.getElementById('btn-spinner');
       const submitBtn = document.getElementById('submit-btn');
 
-      // Animācijas iedarbināšana
       btnText.classList.add('invisible');
       btnSpinner.classList.remove('d-none');
       
-      // Svarīgi: neizmantojam .disabled = true, lai nebloķētu Captcha datus
-      // Tā vietā neļaujam klikšķināt vēlreiz vizuāli
+      // Svarīgi: neizmantojam .disabled = true, lai nepārtrauktu Captcha datu sūtīšanu
       submitBtn.style.pointerEvents = 'none';
       submitBtn.style.opacity = '0.7';
     }

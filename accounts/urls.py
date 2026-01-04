@@ -14,6 +14,8 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 
+from accounts.views import MyLoginView
+
 app_name = 'accounts'
 
 urlpatterns = [
@@ -25,20 +27,15 @@ urlpatterns = [
     
     path('search/', views.global_search, name='global-search'),
     
-
     # change password
     path('password-change', PasswordChangeView.as_view(), name='password-change'),
-    
-    # PIEVIENO ŠOS DIVUS:
 
     path('logout/', auth_views.LogoutView.as_view(
-        next_page='accounts:login' # Pēc iziešanas metīs uz login
+        next_page='accounts:login'
     ), name='logout'),
     
-    path('login/', auth_views.LoginView.as_view(
-        template_name='registration/login.html',
-        authentication_form=LoginFormWithCaptcha # Tagad šis strādās
-    ), name='login'),
+    # ŠĪ IR VIENĪGĀ LOGIN RINDA, KAS TEV VAJADZĪGA:
+    path('login/', MyLoginView.as_view(), name='login'),
 ]
 
 if settings.DEBUG:

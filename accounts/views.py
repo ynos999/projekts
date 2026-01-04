@@ -15,6 +15,8 @@ from .forms import RegisterForm, ProfileUpdateForm
 from comments.models import Comment
 from django.db.models import Q
 
+from .forms import LoginFormWithCaptcha
+
 # user registration
 @login_not_required
 def RegisterView(request):
@@ -208,3 +210,16 @@ def global_search(request):
         'projects': projects,
         'teams': teams,
     })
+    
+
+class MyLoginView(LoginView):
+    form_class = LoginFormWithCaptcha
+    template_name = 'registration/login.html'
+
+    # Ieteicams pievienot šo, lai redzētu vai forma vispār tiek izmantota
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Šis palīdzēs Tev pēc tam ielādēt mainīgo veidnē, ja izmantosi manuālo skriptu
+        from django.conf import settings
+        context['RECAPTCHA_SITE_KEY'] = getattr(settings, 'RECAPTCHA_PUBLIC_KEY', '')
+        return context
