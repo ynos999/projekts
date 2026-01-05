@@ -20,7 +20,6 @@ from datetime import datetime
 from django.core.mail import send_mail
 from django.conf import settings
 
-
 @require_POST
 @csrf_exempt
 def update_task_status_ajax(request, task_id):
@@ -278,9 +277,16 @@ class TaskDeleteView(LoginRequiredMixin, DeleteView):
 class TaskUpdateView(LoginRequiredMixin, UpdateView):
     model = Task
     fields = ['name', 'project', 'user_assigned_to','description', 'priority', 'status','start_date', 'due_date']
-    template_name = 'tasks/task_form.html'  # Pārliecinies, ka šis fails eksistē!
+    template_name = 'tasks/task_form.html'
     success_url = reverse_lazy('tasks:list')
 
     def get_queryset(self):
-        return Task.objects.filter(Q(owner=self.request.user) | Q(user_assigned_to=self.request.user))
-        # return Task.objects.filter(owner=self.request.user)
+        # 1. Ja lietotājs ir admin, atļaujam piekļuvi visiem uzdevumiem
+        if self.request.user.is_superuser:
+            return Task.objects.all()
+        
+        # 2. Pārējiem lietotājiem rādām tikai viņu uzdevumus
+        return Task.objects.filter(
+            Q(owner=self.request.user) | Q(user_assigned_to=self.request.user)
+        )
+        
