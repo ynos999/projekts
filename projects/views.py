@@ -190,6 +190,16 @@ class ProjectUpdateView(UpdateView):
 
     def get_success_url(self):
         return reverse_lazy('projects:project-detail', kwargs={'pk': self.object.pk})
+    
+    def test_func(self):
+        # Šī funkcija pārbauda, vai lietotājs drīkst labot
+        project = self.get_object()
+        return self.request.user == project.owner
+
+    def handle_no_permission(self):
+        # Šī funkcija nostrādā, ja test_func atgriež False
+        messages.error(self.request, "Jums nav tiesību labot šo projektu!")
+        return redirect('projects:list')
 
 
 class ProjectDeleteView(DeleteView):

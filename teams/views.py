@@ -5,8 +5,9 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, ListView, UpdateView, DeleteView
 from .models import Team
 from .forms import TeamForm
+from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
+from django.shortcuts import redirect
 
-from django.contrib.auth.mixins import LoginRequiredMixin
 
 class TeamCreateView(CreateView):
     model = Team
@@ -135,6 +136,16 @@ class TeamUpdateView(UpdateView):
 
     def get_success_url(self):
         return reverse_lazy('teams:team-list')
+    
+    def test_func(self):
+        # Pārbaudām, vai lietotājs ir īpašnieks
+        obj = self.get_object()
+        return obj.owner == self.request.user
+
+    def handle_no_permission(self):
+        # Ja test_func atgriež False, izpildās šis:
+        messages.error(self.request, "Jums nav tiesību labot šo projektu!")
+        return redirect('projects:list')
 
 
 class TeamDeleteView(DeleteView):
