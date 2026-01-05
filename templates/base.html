@@ -74,6 +74,14 @@
 
 {% block script %}
 <script>
+
+    // Tooltip aktivizēšana
+    $(function () {
+        if (typeof $.fn.tooltip !== 'undefined') {
+            $('[data-toggle="tooltip"]').tooltip();
+        }
+    });
+
     function checkNotifications() {
         // Mēs vēršamies pie jauna URL, ko tūlīt izveidosim
         fetch('/notifications/unread-count/') 
