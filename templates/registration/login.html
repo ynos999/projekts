@@ -3,7 +3,13 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<script src="https://www.google.com/recaptcha/api.js?render=6LcS3j8sAAAAAHOQCbi4c7iQOGHvJMdC8h1oLgRO"></script>
+<!-- <script src="https://www.google.com/recaptcha/api.js?render=6LcS3j8sAAAAAHOQCbi4c7iQOGHvJMdC8h1oLgRO"></script> -->
+<script src="https://www.google.com/recaptcha/api.js?render={{ RECAPTCHA_PUBLIC_KEY }}"></script>
+<!-- {% if RECAPTCHA_PUBLIC_KEY %}
+  <script src="https://www.google.com/recaptcha/api.js?render={{ RECAPTCHA_PUBLIC_KEY }}"></script>
+{% else %}
+  <script>console.error("reCAPTCHA Public Key is missing!");</script>
+{% endif %} -->
 <div class="card-body">
   <p class="login-box-msg">Sign in to start your session</p>
 

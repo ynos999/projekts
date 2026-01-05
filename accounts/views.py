@@ -20,6 +20,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV3
 from .forms import LoginFormWithCaptcha
+from django.conf import settings
 
 
 # user registration
@@ -220,8 +221,7 @@ class MyLoginView(LoginView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from django.conf import settings
-        context['RECAPTCHA_SITE_KEY'] = getattr(settings, 'RECAPTCHA_PUBLIC_KEY', '')
+        context['RECAPTCHA_PUBLIC_KEY'] = settings.RECAPTCHA_PUBLIC_KEY
         return context
     
 class LoginFormWithCaptcha(AuthenticationForm):

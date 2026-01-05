@@ -3,10 +3,11 @@ from tempus_dominus.widgets import DatePicker
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Profile
-
 from django.contrib.auth.forms import AuthenticationForm
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV3
+from django.conf import settings
+
 
 class RegisterForm(UserCreationForm):
 
@@ -69,10 +70,29 @@ class ProfileUpdateForm(forms.ModelForm):
         ]
         
 
+# class LoginFormWithCaptcha(AuthenticationForm):
+#     captcha = ReCaptchaField(widget=ReCaptchaV3())
+
+#     class Media:
+#         # Šī rinda automātiski ielādēs Google skriptu jebkurā lapā, kurā ir šī forma
+#         # (tai skaitā Admin pieteikšanās lapā)
+#         js = ('https://www.google.com/recaptcha/api.js?render=6LcS3j8sAAAAAHOQCbi4c7iQOGHvJMdC8h1oLgRO',)
+        
+
 class LoginFormWithCaptcha(AuthenticationForm):
     captcha = ReCaptchaField(widget=ReCaptchaV3())
 
-    class Media:
-        # Šī rinda automātiski ielādēs Google skriptu jebkurā lapā, kurā ir šī forma
-        # (tai skaitā Admin pieteikšanās lapā)
-        js = ('https://www.google.com/recaptcha/api.js?render=6LcS3j8sAAAAAHOQCbi4c7iQOGHvJMdC8h1oLgRO',)
+    @property
+    def media(self):
+        # 1. Iegūstam bāzes medijus no formas laukiem (piem. recaptcha skriptus)
+        base_media = super().media
+        
+        # 2. Iegūstam atslēgu no settings
+        site_key = getattr(settings, "RECAPTCHA_PUBLIC_KEY", "")
+        
+        # 3. Izveidojam jaunu Media objektu ar mūsu dinamisko skriptu
+        custom_js = [f"https://www.google.com/recaptcha/api.js?render={site_key}"]
+        dynamic_media = forms.Media(js=custom_js)
+        
+        # 4. Saskaitām abus Media objektus kopā
+        return base_media + dynamic_media
