@@ -7,7 +7,20 @@
  <!-- Default box -->
  <div class="card">
     <div class="card-header">
-      <h3 class="card-title">{{ project.name }}</h3>
+      <!-- <h3 class="card-title">{{ project.name }}</h3> -->
+       <h3 class="card-title">
+          {{ project.name }}
+          {% if project.owner == request.user or request.user.is_superuser %}
+              <span class="ml-2">
+                  <a href="{% url 'projects:update' project.pk %}" class="btn btn-xs btn-info">
+                      <i class="fas fa-edit"></i> Edit
+                  </a>
+                  <a href="{% url 'projects:delete' project.pk %}" class="btn btn-xs btn-danger">
+                      <i class="fas fa-trash"></i> Delete
+                  </a>
+              </span>
+          {% endif %}
+      </h3>
 
       <div class="card-tools">
         <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
