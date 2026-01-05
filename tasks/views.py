@@ -17,7 +17,6 @@ from django.views.generic import DeleteView
 from django.db.models import Q, CharField
 from django.db.models.functions import Cast
 from datetime import datetime
-
 from django.core.mail import send_mail
 from django.conf import settings
 
@@ -224,36 +223,44 @@ class ActiveTaskListView(TaskListView):
     def get_queryset(self):
         # Papildus filtrējam, lai rādītu tikai nepabeigtos
         return super().get_queryset().exclude(status='Completed')
+    
 
+class MyActiveTasksListView(LoginRequiredMixin, ListView):
+    model = Task
+    template_name = 'tasks/task_list.html'
+    context_object_name = 'tasks'
+
+    def get_queryset(self):
+        return Task.objects.filter(
+            user_assigned_to=self.request.user
+        ).exclude(status='completed').order_by('-due_date')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Mani aktīvie uzdevumi"
+        return context
 
 class TaskCreateView(LoginRequiredMixin, CreateView):
     model = Task
-    form_class = TaskUpdateForm  # Izmanto jau importēto formu
-    # form_class = TaskForm
+    form_class = TaskUpdateForm
     template_name = 'tasks/task_form.html'
     success_url = reverse_lazy('tasks:list')
 
     def form_valid(self, form):
+        # 1. Piesaistām autoru
         form.instance.owner = self.request.user
+        
+        # 2. SAGLABĀJAM objektu datubāzē (SVARĪGI!)
         response = super().form_valid(form)
         
-        # Paziņojuma nosūtīšana
-        actor_username = self.request.user.username
-        verb = f'Tev piešķirts jauns uzdevums: {self.object.name}'
-
-        create_notification(
-            actor_username=actor_username,
-            verb=verb,
+        # 3. Tikai tagad sūtām paziņojumu, jo self.object tagad eksistē
+        create_notification.delay(
+            actor_username=self.request.user.username,
+            verb=f'Tev piešķirts jauns uzdevums: {self.object.name}',
             object_id=self.object.id,
             content_type_model="task",
             content_type_app_label="tasks"
         )
-        
-        if self.object.user_assigned_to and self.object.user_assigned_to.email:
-            subject = f"Jauns uzdevums: {self.object.name}"
-            message = f"Sveiki, {self.object.user_assigned_to.username}!\n\nJums ir piešķirts jauns uzdevums: '{self.object.name}' projektā '{self.object.project}'.\nTermiņš: {self.object.due_date}"
-            recipient_list = [self.object.user_assigned_to.email]
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipient_list, fail_silently=True)
         
         return response
 

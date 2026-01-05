@@ -53,9 +53,14 @@
                       <th style="width: 20%">
                           Project Name
                       </th>
-                      <th style="width: 30%">
+                      <th style="width: 20%">
                           Team Members
                       </th>
+
+                      <th style="width: 10%">
+                          Leader
+                      </th>
+
                       <th>
                           Project Progress
                       </th>
@@ -91,13 +96,24 @@
                       <td>
                           <ul class="list-inline">
                             {% for member in project.team.members.all %}
-                              <li class="list-inline-item">
-                                  <img alt="Avatar" class="table-avatar" src="{{ member.profile.profile_picture_url }}">
+                              <li class="list-inline-item" title="{{ member.username }}">
+                                  <img alt="Avatar" class="table-avatar" src="{{ member.profile.profile_picture_url }}" style="width: 30px; height: 30px; border-radius: 50%;">
+                                  <span class="small ml-1">{{ member.username }}</span>
                               </li>
-                              {% endfor %}
-                              
+                            {% endfor %}
                           </ul>
+
                       </td>
+
+                      <td>
+                            <div class="d-flex align-items-center">
+                                <img alt="Avatar" class="table-avatar" 
+                                    src="{{ project.owner.profile.profile_picture_url }}" 
+                                    style="width: 35px; height: 35px; border-radius: 50%; border: 2px solid #17a2b8;">
+                                <span class="small ml-2"><strong>{{ project.owner.username }}</strong></span>
+                            </div>
+                        </td>
+
                       <td class="project_progress">
                           <div class="progress progress-sm">
                               <div class="progress-bar bg-{{project.status_color}}" role="progressbar" aria-valuenow="{{ project.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{project.progress}}%">

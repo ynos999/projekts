@@ -9,7 +9,6 @@ from .forms import ProjectForm, AttachmentForm
 from comments.models import Comment
 from comments.forms import CommentForm
 from tasks.forms import TaskUpdateForm
-
 from notifications.tasks import create_notification
 from django.db.models import Q, CharField
 from django.db.models.functions import Cast
@@ -25,59 +24,29 @@ class ProjectCreateView(CreateView):
     model = Project
     form_class = ProjectForm
     template_name = 'projects/project_create_and_update.html'
-    # success_url = reverse_lazy("accounts:dashboard")
     success_url = reverse_lazy('projects:list')
 
-    def get_context_data(self, **kwargs):
-        # latest notifications
-        context = super(ProjectCreateView, self).get_context_data(**kwargs)
-        # if self.request.user.is_authenticated:
-        latest_notifications = self.request.user.notifications.unread(
-            self.request.user)
+    # ... get_context_data paliek nemainīts ...
 
-        context["latest_notifications"] = latest_notifications[:3]
-        context["notification_count"] = latest_notifications.count()
-        context["header_text"] = "Project Add"
-        context["title"] = "Project Add"
-        context["button_text"] = "Create new Project"
-        return context
-    
     def form_valid(self, form):
         # 1. Piesaistām īpašnieku
         form.instance.owner = self.request.user
         
-        # 2. Izsaucam super() metodi, kas saglabā objektu datubāzē
-        # un izveido self.object mainīgo, ko var izmantot paziņojumam
+        # 2. Saglabājam projektu datubāzē
         response = super().form_valid(form)
         
-        # 3. Nosūtām paziņojumu (izmantojot self.object)
-        actor_username = self.request.user.username
-        verb = f'New Project Assignment, {self.object.name}'
-
+        # 3. Izsaucam paziņojumu sistēmu
+        # Šī funkcija automātiski nosūtīs VIENU glītu HTML e-pastu
         create_notification(
-            actor_username=actor_username,
-            verb=verb,
+            actor_username=self.request.user.username,
+            verb=f'Jauns projekts: {self.object.name}',
             object_id=self.object.id,
             content_type_model="project",
             content_type_app_label="projects"
         )
         
-        try:
-            subject = f"Izveidots jauns projekts: {self.object.name}"
-            message = f"Sveiki!\n\nProjekts '{self.object.name}' ir veiksmīgi izveidots.\nĪpašnieks: {actor_username}\nTermiņš: {self.object.due_date}"
-            recipient_list = [self.request.user.email] # Sūta izveidotājam
-            
-            send_mail(
-                subject, 
-                message, 
-                settings.DEFAULT_FROM_EMAIL, 
-                recipient_list,
-                fail_silently=False, # Uzstādi uz False, lai redzētu kļūdas, ja neaiziet
-            )
-        except Exception as e:
-            print(f"E-pasta sūtīšanas kļūda: {e}")
+        # VISU TRY/EXCEPT BLOKU AR SEND_MAIL ŠEIT VAJAG IZDZĒST
         
-        # 4. Atgriežam response, kas automātiski veiks pārvirzīšanu uz success_url
         return response
     
 
@@ -122,79 +91,40 @@ def get_queryset(self):
 
     return queryset.distinct().order_by('-created_at')
 
+
+class MyProjectsListView(LoginRequiredMixin, ListView):
+    model = Project
+    template_name = 'projects/project_list.html' # Izmantojam esošo projektu saraksta veidni
+    context_object_name = 'projects'
+
+    def get_queryset(self):
+        # Atlasa projektus, kur:
+        # 1. Lietotājs ir īpašnieks (owner)
+        # VAI
+        # 2. Lietotājs ir projektam piesaistītajā komandā
+        return Project.objects.filter(
+            Q(owner=self.request.user) | Q(team__members=self.request.user)
+        ).distinct().order_by('-created_at')
+
     def get_context_data(self, **kwargs):
-        context = super(ProjectListView, self).get_context_data(**kwargs)
-        # Saglabājam paziņojumu loģiku
-        latest_notifications = self.request.user.notifications.unread(self.request.user)
-        context["latest_notifications"] = latest_notifications[:3]
-        context["notification_count"] = latest_notifications.count()
-        
-        # Saglabājam meklēšanas vārdu formā
-        context["search_query"] = self.request.GET.get('q', '')
-        
-        context["header_text"] = "Projects"
-        context["title"] = "All Projects"
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Mani projekti"
+        context['header_text'] = "Mani projekti"
         return context
 
-# class ProjectListView(ListView):
-#     model = Project
-#     context_object_name = "projects"
-#     template_name = "projects/project_list.html"
-#     paginate_by = 5
-
-#     def get_queryset(self):
-#         # Iegūstam visus lietotāja projektus (izmantojot Tavu esošo manageri)
-#         queryset = Project.objects.for_user(self.request.user)
-        
-#         query = self.request.GET.get('q')
-        
-#         if query:
-#             # Pievienojam annotāciju datumam, lai to varētu meklēt kā tekstu
-#             queryset = queryset.annotate(
-#                 due_date_str=Cast('due_date', CharField())
-#             ).filter(
-#                 Q(name__icontains=query) | 
-#                 Q(description__icontains=query) |
-#                 Q(due_date_str__icontains=query)
-#             )
-#         return queryset.order_by('-created_at')
-
-#     def get_context_data(self, **kwargs):
-#         context = super(ProjectListView, self).get_context_data(**kwargs)
-#         # Pievienojam paziņojumu loģiku, kas Tev jau bija
-#         latest_notifications = self.request.user.notifications.unread(self.request.user)
-#         context["latest_notifications"] = latest_notifications[:3]
-#         context["notification_count"] = latest_notifications.count()
-        
-#         # Saglabājam meklēšanas vārdu formā
-#         context["search_query"] = self.request.GET.get('q', '')
-        
-#         context["header_text"] = "Projects"
-#         context["title"] = "All Projects"
-#         return context
-
-# class ProjectListView(ListView):
-#     model = Project
-#     context_object_name = "projects"
-#     template_name = "projects/project_list.html"
-#     paginate_by = 5
-
-#     def get_queryset(self):
-#         return Project.objects.for_user(self.request.user)
-
-#     def get_context_data(self, **kwargs):
-#         # latest notifications
-#         context = super(ProjectListView, self).get_context_data(**kwargs)
-#         # if self.request.user.is_authenticated:
-#         latest_notifications = self.request.user.notifications.unread(
-#             self.request.user)
-
-#         context["latest_notifications"] = latest_notifications[:3]
-#         context["notification_count"] = latest_notifications.count()
-#         context["header_text"] = "Projects"
-#         context["title"] = "All Projects"
-#         return context
-
+def get_context_data(self, **kwargs):
+    context = super(ProjectListView, self).get_context_data(**kwargs)
+    # Saglabājam paziņojumu loģiku
+    latest_notifications = self.request.user.notifications.unread(self.request.user)
+    context["latest_notifications"] = latest_notifications[:3]
+    context["notification_count"] = latest_notifications.count()
+    
+    # Saglabājam meklēšanas vārdu formā
+    context["search_query"] = self.request.GET.get('q', '')
+    
+    context["header_text"] = "Projects"
+    context["title"] = "All Projects"
+    return context
 
 class ProjectNearDueDateListView(ListView):
     model = Project

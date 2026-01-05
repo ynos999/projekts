@@ -100,10 +100,13 @@
       <!-- /.card -->
     </div> 
   </div>
-  <div class="row">
+  <div class="row mt-3">
     <div class="col-12">
-      <a href="#" class="btn btn-secondary">Cancel</a>
-      <input type="submit" value="{{ button_text }}" class="btn btn-success float-right">
+        <a href="{% url 'projects:list' %}" class="btn btn-secondary">Cancel</a>
+        
+        <input type="submit" 
+               value="{% if button_text %}{{ button_text }}{% else %}Create Project{% endif %}" 
+               class="btn btn-success btn-lg float-right shadow-sm">
     </div>
   </div>
 </form>

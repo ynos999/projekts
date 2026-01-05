@@ -12,13 +12,11 @@
     </style>
 </head>
 <body>
-    <h2>Sveiki, {{ user.username }}!</h2>
+    <h2>Sveiki, {{ username }}!</h2>
     <p>{{ verb }}</p>
     {% if project %}
         <p>Projekts: <strong>{{ project.name }}</strong></p>
     {% endif %}
-    <br>
-    <a href="http://{{ domain }}/notifications/" class="button">Skatīt paziņojumu</a>
-    <p>Paldies, <br> Swifthub komanda</p>
+    <p>Paldies, <br> projekti.db.lv</p>
 </body>
 </html>

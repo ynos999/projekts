@@ -8,6 +8,7 @@ from .views import (
     ProjectDeleteView,
     ProjectUpdateView
     )
+from . import views
 
 app_name = 'projects'
 
@@ -19,4 +20,5 @@ urlpatterns = [
     path('<uuid:pk>/delete/', ProjectDeleteView.as_view(), name="delete"),
     path('<uuid:pk>/update/', ProjectUpdateView.as_view(), name="update"),
     path('<uuid:pk>/kanban-board', KanbanBoardView.as_view(), name="kanban-board"),
+    path('my-projects/', views.MyProjectsListView.as_view(), name='my-projects'),
 ]

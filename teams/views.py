@@ -6,6 +6,7 @@ from django.views.generic import CreateView, ListView, UpdateView, DeleteView
 from .models import Team
 from .forms import TeamForm
 
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 class TeamCreateView(CreateView):
     model = Team
@@ -75,6 +76,20 @@ class TeamListView(ListView):
         context["notification_count"] = latest_notifications.count()
         context["header_text"] = "Team List"
         context["title"] = "Team List"
+        return context
+    
+class MyTeamsListView(LoginRequiredMixin, ListView):
+    model = Team
+    template_name = 'teams/team_list.html' # Izmanto esošo komandu saraksta veidni
+    context_object_name = 'teams'
+
+    def get_queryset(self):
+        # Atgriež tikai tās komandas, kurās pašreizējais lietotājs ir biedrs
+        return Team.objects.filter(members=self.request.user).distinct()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Mani komandas"
         return context
 
 

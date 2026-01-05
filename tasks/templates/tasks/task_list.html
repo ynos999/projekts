@@ -36,6 +36,7 @@
                         <tr>
                             <th style="width: 20%">Uzdevums</th>
                             <th style="width: 20%">Projekts</th>
+                            <th style="width: 15%">Izpildītājs</th> 
                             <th>Status</th>
                             <th>Prioritāte</th>
                             <th>Termiņš</th>
@@ -48,6 +49,22 @@
                         <tr>
                             <td>{{ task.name }}</td>
                             <td>{{ task.project.name }}</td>
+
+                            <td>
+                                {% if task.user_assigned_to %}
+                                <div class="d-flex align-items-center">
+                                    <img alt="Avatar" class="table-avatar" 
+                                        src="{{ task.user_assigned_to.profile.profile_picture_url }}"
+                                        style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; margin-right: 10px;">
+                                    <span class="small">
+                                        {{ task.user_assigned_to.username }}
+                                    </span>
+                                </div>
+                                {% else %}
+                                <span class="text-muted small">Nav piešķirts</span>
+                                {% endif %}
+                            </td>
+
                             <td>
                                 <span class="badge badge-{{ task.status_color }}">
                                     {{ task.get_status_display }}
