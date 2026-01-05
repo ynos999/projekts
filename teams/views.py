@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import Http404
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -94,33 +94,45 @@ class MyTeamsListView(LoginRequiredMixin, ListView):
         return context
 
 
-class TeamUpdateView(UpdateView):
+class TeamUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView): # Pievienots Mixin
     model = Team
     form_class = TeamForm
     template_name = "teams/create_team.html"
 
     def get_object(self, queryset=None):
-        # get team
-        team = get_object_or_404(Team, pk=self.kwargs['pk'])
+        """
+        Atgriež objektu. Šeit mēs vairs neizmetam 404 permisiju dēļ, 
+        jo to izdarīs UserPassesTestMixin.
+        """
+        return get_object_or_404(Team, pk=self.kwargs['pk'])
 
-        # check permission on this team
-        if team.created_by != self.request.user:
-            raise Http404("Team not found.")
-        return team
+    def test_func(self):
+        """
+        Šī funkcija tagad vienīgā atbild par drošību.
+        """
+        team = self.get_object()
+        # Atļaujam, ja lietotājs ir veidotājs VAI admins
+        return team.created_by == self.request.user or self.request.user.is_superuser
+
+    def handle_no_permission(self):
+        """
+        Nostrādā, ja test_func atgriež False.
+        """
+        messages.error(self.request, "Jums nav tiesību labot šo komandu!")
+        return redirect('teams:team-list')
 
     def get_context_data(self, **kwargs):
-        # latest notifications
-        context = super(TeamUpdateView, self).get_context_data(**kwargs)
-        # if self.request.user.is_authenticated:
-        latest_notifications = self.request.user.notifications.unread(
-            self.request.user)
-
-        context["latest_notifications"] = latest_notifications[:3]
-        context["notification_count"] = latest_notifications.count()
-        context["header_text"] = "Team Update"
-        context["title"] = "Team Update"
-        context["button_text"] = "Update Team"
-        context["card_title"] = "Update Teams"
+        context = super().get_context_data(**kwargs)
+        # Notifications loģika
+        latest_notifications = self.request.user.notifications.unread(self.request.user)
+        context.update({
+            "latest_notifications": latest_notifications[:3],
+            "notification_count": latest_notifications.count(),
+            "header_text": "Team Update",
+            "title": "Team Update",
+            "button_text": "Update Team",
+            "card_title": "Update Teams"
+        })
         return context
 
     def form_valid(self, form):
@@ -137,16 +149,6 @@ class TeamUpdateView(UpdateView):
     def get_success_url(self):
         return reverse_lazy('teams:team-list')
     
-    def test_func(self):
-        # Pārbaudām, vai lietotājs ir īpašnieks
-        obj = self.get_object()
-        return obj.owner == self.request.user
-
-    def handle_no_permission(self):
-        # Ja test_func atgriež False, izpildās šis:
-        messages.error(self.request, "Jums nav tiesību labot šo projektu!")
-        return redirect('projects:list')
-
 
 class TeamDeleteView(DeleteView):
     model = Team

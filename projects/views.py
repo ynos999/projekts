@@ -13,11 +13,9 @@ from notifications.tasks import create_notification
 from django.db.models import Q, CharField
 from django.db.models.functions import Cast
 from datetime import datetime
-from django.contrib.auth.mixins import LoginRequiredMixin
-
-from django.core.mail import send_mail  # Pievieno importu augšā
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.core.mail import send_mail
 from django.conf import settings
-
 
 
 class ProjectCreateView(CreateView):
@@ -148,58 +146,52 @@ class ProjectNearDueDateListView(ListView):
         context["header_text"] = "Due Projects"
         return context
 
-
-class ProjectUpdateView(UpdateView):
+class ProjectUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Project
     form_class = ProjectForm
     template_name = 'projects/project_create_and_update.html'
 
     def get_object(self, queryset=None):
-        # get project
-        project = get_object_or_404(Project, pk=self.kwargs['pk'])
+        # Tikai iegūstam objektu. Piekļuvi pārbaudīs test_func.
+        return get_object_or_404(Project, pk=self.kwargs['pk'])
 
-        # check permission on this project
-        if project.owner != self.request.user:
-            raise Http404("Project not found.")
-        return project
+    def test_func(self):
+        # Šeit notiek galvenā piekļuves pārbaude (Īpašnieks vai Admin)
+        project = self.get_object()
+        return self.request.user == project.owner or self.request.user.is_superuser
+
+    def handle_no_permission(self):
+        # Ja test_func atgriež False, lietotājs tiek novirzīts ar paziņojumu
+        messages.error(self.request, "Jums nav tiesību labot šo projektu!")
+        return redirect('projects:list')
 
     def get_context_data(self, **kwargs):
-        # latest notifications
-        context = super(ProjectUpdateView, self).get_context_data(**kwargs)
-        # if self.request.user.is_authenticated:
-        latest_notifications = self.request.user.notifications.unread(
-            self.request.user)
-
-        context["latest_notifications"] = latest_notifications[:3]
-        context["notification_count"] = latest_notifications.count()
-        context["header_text"] = "Project Edit"
-        context["title"] = "Project Edit"
-        context["button_text"] = "Save changes"
+        context = super().get_context_data(**kwargs)
+        
+        # Paziņojumu loģika
+        if self.request.user.is_authenticated:
+            # Pārliecinies, vai .unread() tiešām prasa lietotāju kā argumentu
+            latest_notifications = self.request.user.notifications.unread(self.request.user)
+            context["latest_notifications"] = latest_notifications[:3]
+            context["notification_count"] = latest_notifications.count()
+        
+        context.update({
+            "header_text": "Project Edit",
+            "title": "Project Edit",
+            "button_text": "Save changes"
+        })
         return context
 
     def form_valid(self, form):
-        # show message
         messages.success(self.request, "Project updated successfully")
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        # show message
-        messages.error(
-            self.request, "Please correct the errors and try again.")
+        messages.error(self.request, "Please correct the errors and try again.")
         return super().form_invalid(form)
 
     def get_success_url(self):
         return reverse_lazy('projects:project-detail', kwargs={'pk': self.object.pk})
-    
-    def test_func(self):
-        # Šī funkcija pārbauda, vai lietotājs drīkst labot
-        project = self.get_object()
-        return self.request.user == project.owner
-
-    def handle_no_permission(self):
-        # Šī funkcija nostrādā, ja test_func atgriež False
-        messages.error(self.request, "Jums nav tiesību labot šo projektu!")
-        return redirect('projects:list')
 
 
 class ProjectDeleteView(DeleteView):
