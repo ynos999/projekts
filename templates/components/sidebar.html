@@ -125,18 +125,17 @@
                       <p>All Tasks</p>
                     </a>
                   </li>
-
-                  <li class="nav-item">
-                    <a href="{% url 'tasks:active-tasks' %}" class="nav-link {% if request.resolver_match.url_name == 'active-tasks' %}active{% endif %}">
-                      <i class="far fa-circle nav-icon text-info"></i>
-                      <p>Active Tasks</p>
-                    </a>
-                  </li>
                   <li class="nav-item">
                       <a href="{% url 'tasks:my-active-tasks' %}" class="nav-link {% if request.resolver_match.url_name == 'my-active-tasks' %}active{% endif %}">
                           <i class="far fa-circle nav-icon text-warning"></i>
                           <p>My Active Tasks</p>
                       </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="{% url 'tasks:active-tasks' %}" class="nav-link {% if request.resolver_match.url_name == 'active-tasks' %}active{% endif %}">
+                      <i class="far fa-circle nav-icon text-info"></i>
+                      <p>Active Tasks</p>
+                    </a>
                   </li>
                   <li class="nav-item">
                     <a href="{% url 'tasks:create' %}" class="nav-link {% if request.resolver_match.app_name == 'tasks' and request.resolver_match.url_name == 'create' %}active{% endif %}">
