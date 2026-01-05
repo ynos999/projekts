@@ -51,7 +51,7 @@
                             <td>{{ task.project.name }}</td>
 
                             <td>
-                                {% if task.user_assigned_to %}
+                                <!-- {% if task.user_assigned_to %}
                                 <div class="d-flex align-items-center">
                                     <img alt="Avatar" class="table-avatar" 
                                         src="{{ task.user_assigned_to.profile.profile_picture_url }}"
@@ -62,7 +62,25 @@
                                 </div>
                                 {% else %}
                                 <span class="text-muted small">Nav piešķirts</span>
-                                {% endif %}
+                                {% endif %} -->
+
+                                <ul class="list-inline m-0">
+                                    {% if task.user_assigned_to %}
+                                    <li class="list-inline-item">
+                                        <img alt="{{ task.user_assigned_to.username }}" 
+                                            class="table-avatar" 
+                                            src="{{ task.user_assigned_to.profile.profile_picture_url }}" 
+                                            data-toggle="tooltip" 
+                                            data-placement="top"
+                                            title="{% if task.user_assigned_to.get_full_name %}{{ task.user_assigned_to.get_full_name }}{% else %}{{ task.user_assigned_to.username }}{% endif %}"
+                                            style="width: 35px; height: 35px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.15); object-fit: cover; cursor: pointer;">
+                                    </li>
+                                    {% else %}
+                                    <li class="list-inline-item">
+                                        <span class="badge badge-secondary" style="font-size: 0.75rem;">Nav piešķirts</span>
+                                    </li>
+                                    {% endif %}
+                                </ul>
                             </td>
 
                             <td>
@@ -104,4 +122,14 @@
         </div>
     </div>
 </section>
+{% endblock %}
+{% block script %}
+<script>
+  $(function () {
+    // Pārbaudām vai tooltip funkcija eksistē, lai izvairītos no JS kļūdām
+    if ($.fn.tooltip) {
+        $('[data-toggle="tooltip"]').tooltip();
+    }
+  });
+</script>
 {% endblock %}

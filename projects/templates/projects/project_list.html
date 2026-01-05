@@ -95,24 +95,45 @@
                       </td>
                       <td>
                           <ul class="list-inline">
-                            {% for member in project.team.members.all %}
+                            <!-- {% for member in project.team.members.all %}
                               <li class="list-inline-item" title="{{ member.username }}">
                                   <img alt="Avatar" class="table-avatar" src="{{ member.profile.profile_picture_url }}" style="width: 30px; height: 30px; border-radius: 50%;">
                                   <span class="small ml-1">{{ member.username }}</span>
                               </li>
+                            {% endfor %} -->
+
+                            {% for member in project.team.members.all %}
+                            <li class="list-inline-item">
+                                <img alt="{{ member.username }}" 
+                                    class="table-avatar" 
+                                    src="{{ member.profile.profile_picture_url }}" 
+                                    data-toggle="tooltip" 
+                                    data-placement="top"
+                                    title="{% if member.get_full_name %}{{ member.get_full_name }}{% else %}{{ member.username }}{% endif %}"
+                                    style="width: 35px; height: 35px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.15); object-fit: cover; cursor: pointer;">
+                            </li>
                             {% endfor %}
                           </ul>
 
                       </td>
 
                       <td>
-                            <div class="d-flex align-items-center">
+                            <!-- <div class="d-flex align-items-center">
                                 <img alt="Avatar" class="table-avatar" 
                                     src="{{ project.owner.profile.profile_picture_url }}" 
                                     style="width: 35px; height: 35px; border-radius: 50%; border: 2px solid #17a2b8;">
                                 <span class="small ml-2"><strong>{{ project.owner.username }}</strong></span>
-                            </div>
-                        </td>
+                            </div> -->
+                            <li class="list-inline-item">
+                                <img alt="{{ member.username }}" 
+                                    class="table-avatar" 
+                                    src="{{ project.owner.profile.profile_picture_url }}" 
+                                    data-toggle="tooltip" 
+                                    data-placement="top"
+                                    title="{% if member.get_full_name %}{{ member.get_full_name }}{% else %}{{ project.owner.username }}{% endif %}"
+                                    style="width: 35px; height: 35px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.15); object-fit: cover; cursor: pointer;">
+                            </li>
+                      </td>
 
                       <td class="project_progress">
                           <div class="progress progress-sm">
@@ -185,3 +206,14 @@
       <!-- /.card -->
 
 {% endblock  %}
+
+{% block script %}
+<script>
+  $(function () {
+    // Pārbaudām vai tooltip funkcija eksistē, lai izvairītos no JS kļūdām
+    if ($.fn.tooltip) {
+        $('[data-toggle="tooltip"]').tooltip();
+    }
+  });
+</script>
+{% endblock %}

@@ -141,8 +141,13 @@
 
 {% endblock  %}
 
+{% block script %}
 <script>
   $(function () {
-    $('[data-toggle="tooltip"]').tooltip()
-  })
+    // Pārbaudām vai tooltip funkcija eksistē, lai izvairītos no JS kļūdām
+    if ($.fn.tooltip) {
+        $('[data-toggle="tooltip"]').tooltip();
+    }
+  });
 </script>
+{% endblock %}
