@@ -71,3 +71,8 @@ class ProfileUpdateForm(forms.ModelForm):
 
 class LoginFormWithCaptcha(AuthenticationForm):
     captcha = ReCaptchaField(widget=ReCaptchaV3())
+
+    class Media:
+        # Šī rinda automātiski ielādēs Google skriptu jebkurā lapā, kurā ir šī forma
+        # (tai skaitā Admin pieteikšanās lapā)
+        js = ('https://www.google.com/recaptcha/api.js?render=6LcS3j8sAAAAAHOQCbi4c7iQOGHvJMdC8h1oLgRO',)
