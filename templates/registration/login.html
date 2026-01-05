@@ -12,9 +12,14 @@
       {{ form.media }}  {{ form|crispy }}
       
       <div class="mt-4">
-        <button type="submit" id="submit-btn" class="btn btn-primary btn-block shadow-sm">
+
+        <button type="submit" id="submit-btn" class="btn btn-primary btn-block shadow-sm position-relative">
           <span id="btn-text">Login</span>
+          <div id="btn-spinner" class="d-none position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          </div>
         </button>
+
       </div>
   </form>
 </div>

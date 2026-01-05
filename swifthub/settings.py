@@ -289,9 +289,7 @@ LOGOUT_URL = 'logout'
 LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = LOGIN_URL
 
-# Ielādējam atslēgas no .env
-RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY')
-RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY')
+
 
 # # TESTA VIDEI (kad DEBUG ir True)
 # if os.getenv('DEBUG') == 'True':
@@ -308,6 +306,10 @@ RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY')
 # # Produkcijas pārbaude
 # if not RECAPTCHA_PUBLIC_KEY and os.getenv('DEBUG') != 'True':
 #     print("WARNING: RECAPTCHA_PUBLIC_KEY is missing in Production!")
+
+# Ielādējam atslēgas no .env
+RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY')
+RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY')
 
 if DEBUG:
     os.environ['RECAPTCHA_TESTING'] = 'True'

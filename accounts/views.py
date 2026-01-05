@@ -15,11 +15,12 @@ from .forms import RegisterForm, ProfileUpdateForm
 from comments.models import Comment
 from django.db.models import Q
 
-from .forms import LoginFormWithCaptcha
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.forms import AuthenticationForm
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV3
+from .forms import LoginFormWithCaptcha
+
 
 # user registration
 @login_not_required
@@ -211,15 +212,15 @@ def global_search(request):
         'projects': projects,
         'teams': teams,
     })
-    
+
+
 class MyLoginView(LoginView):
-    form_class = LoginFormWithCaptcha
+    form_class = LoginFormWithCaptcha  # Jāsakrīt ar importu
     template_name = 'registration/login.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from django.conf import settings
-        # Izmantojam drošu piekļuvi iestatījumam
         context['RECAPTCHA_SITE_KEY'] = getattr(settings, 'RECAPTCHA_PUBLIC_KEY', '')
         return context
     
