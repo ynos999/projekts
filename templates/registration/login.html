@@ -3,13 +3,14 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
+<script src="https://www.google.com/recaptcha/api.js?render=6LcS3j8sAAAAAHOQCbi4c7iQOGHvJMdC8h1oLgRO"></script>
 <div class="card-body">
   <p class="login-box-msg">Sign in to start your session</p>
 
   <form id="login-form" action="" method="post">
       {% csrf_token %}
       
-      {{ form.media }}  {{ form|crispy }}
+      {{ form.media }}<div class="card-body"></div>  {{ form|crispy }}
       
       <div class="mt-4">
 
@@ -40,5 +41,6 @@
       submitBtn.style.opacity = '0.7';
     }
   });
+  
 </script>
 {% endblock %}
