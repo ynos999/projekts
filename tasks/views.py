@@ -20,37 +20,60 @@ from datetime import datetime
 from django.core.mail import send_mail
 from django.conf import settings
 
-@require_POST
 @csrf_exempt
+@require_POST
 def update_task_status_ajax(request, task_id):
-    if request.method == "POST":
-        task = get_object_or_404(Task, id=task_id)
-        raw_status = request.POST.get('status', '').lower().strip()
+    # 1. Atrodam uzdevumu
+    task = get_object_or_404(Task, id=task_id)
+    
+    # 2. DROŠĪBA: Pārbaudām, vai lietotājs drīkst mainīt šo uzdevumu
+    # Atļaujam tikai: Adminam, Uzdevuma īpašniekam vai Izpildītājam
+    is_owner = task.owner == request.user
+    is_assignee = task.user_assigned_to == request.user
+    is_admin = request.user.is_superuser
+    
+    if not (is_owner or is_assignee or is_admin):
+        return JsonResponse({
+            'success': False, 
+            'error': 'Jums nav tiesību mainīt šī uzdevuma statusu.'
+        }, status=403)
+
+    # 3. Iegūstam statusu no POST datiem
+    raw_status = request.POST.get('status', '').lower().strip()
+    
+    # Statusu vārdnīca saskaņā ar tavu DB struktūru
+    status_map = {
+        'backlog': 'Backlog',
+        'todo': 'To Do',
+        'to do': 'To Do',
+        'inprogress': 'In Progress',
+        'in progress': 'In Progress',
+        'completed': 'Completed',
+        'done': 'Completed'
+    }
+    
+    new_status = status_map.get(raw_status)
+    
+    # 4. Saglabājam izmaiņas
+    if new_status:
+        task.status = new_status
+        task.save()
         
-        # Apvienota un droša vārdnīca
-        status_map = {
-            'backlog': 'Backlog',
-            'todo': 'To Do',
-            'to do': 'To Do',
-            'inprogress': 'In Progress',
-            'in progress': 'In Progress',
-            'completed': 'Completed',
-            'done': 'Completed'
-        }
+        # DEBUG print terminālī
+        print(f"DEBUG: Statusa maiņa veiksmīga. Uzdevums: {task.id}, Jaunais statuss: {task.status}")
         
-        new_status = status_map.get(raw_status)
-        
-        if new_status:
-            task.status = new_status
-            task.save()
-            # Šis print apstiprinās, ka DB operācija notika
-            print(f"DEBUG: Veiksmīgi saglabāts DB: ID {task.id} -> {task.status}")
-            return JsonResponse({'success': True, 'new_status': task.status})
-        
-        print(f"DEBUG: KĻŪDA! '{raw_status}' netika atrasts status_map")
-        return JsonResponse({'success': False, 'error': f'Invalid status: {raw_status}'}, status=400)
-            
-    return JsonResponse({'success': False}, status=405)
+        return JsonResponse({
+            'success': True, 
+            'new_status': task.status,
+            'task_id': task.id
+        })
+    
+    # 5. Kļūdas paziņojums, ja statuss nav atpazīts
+    print(f"DEBUG: KĻŪDA! Saņemtais statuss '{raw_status}' netika atpazīts.")
+    return JsonResponse({
+        'success': False, 
+        'error': f'Nepareizs statuss: {raw_status}'
+    }, status=400)
 
 
 @require_POST
@@ -175,7 +198,7 @@ class TaskListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         # 1. Pamata filtrs (Lomas noteikšana)
-        if self.request.user.is_staff:
+        if self.request.user.is_superuser or self.request.user.is_staff:
             queryset = Task.objects.all()
         else:
             queryset = Task.objects.filter(
@@ -241,38 +264,35 @@ class MyActiveTasksListView(LoginRequiredMixin, ListView):
 
 class TaskCreateView(LoginRequiredMixin, CreateView):
     model = Task
-    form_class = TaskUpdateForm
+    form_class = TaskForm # Izmanto TaskForm ar kalendāra widgetiem
     template_name = 'tasks/task_form.html'
     success_url = reverse_lazy('tasks:list')
 
     def form_valid(self, form):
-        # 1. Piesaistām autoru
         form.instance.owner = self.request.user
-        
-        # 2. SAGLABĀJAM objektu datubāzē (SVARĪGI!)
         response = super().form_valid(form)
         
-        # 3. Tikai tagad sūtām paziņojumu, jo self.object tagad eksistē
-        create_notification.delay(
-            actor_username=self.request.user.username,
-            verb=f'Tev piešķirts jauns uzdevums: {self.object.name}',
-            object_id=self.object.id,
-            content_type_model="task",
-            content_type_app_label="tasks"
-        )
-        
+        # Sūtām paziņojumu tikai ja uzdevums ir kādam piešķirts
+        if self.object.user_assigned_to:
+            # Ja neizmanto Celery, noņem .delay
+            create_notification(
+                actor_username=self.request.user.username,
+                verb=f'Tev piešķirts jauns uzdevums: {self.object.name}',
+                object_id=self.object.id,
+                content_type_model="task",
+                content_type_app_label="tasks"
+            )
         return response
-
-
+        
 class TaskDeleteView(LoginRequiredMixin, DeleteView):
     model = Task
-    # Pēc dzēšanas lietotājs tiks novirzīts atpakaļ uz sarakstu
     success_url = reverse_lazy('tasks:list')
     
-    # Šis nodrošina, ka lietotājs var dzēst tikai savus vai projektam piesaistītos uzdevumus (pēc izvēles)
     def get_queryset(self):
+        # ATĻAUJAM adminam dzēst jebko
+        if self.request.user.is_superuser:
+            return Task.objects.all()
         return Task.objects.filter(Q(owner=self.request.user) | Q(user_assigned_to=self.request.user))
-        # return Task.objects.filter(owner=self.request.user)
 
 class TaskUpdateView(LoginRequiredMixin, UpdateView):
     model = Task
