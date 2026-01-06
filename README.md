@@ -10,6 +10,7 @@
 2. [Technologies Used](#technologies-used)
 3. [Installation](#installation)
 4. [Usage](#usage)
+5. [env] (#env)
 
 ---
 
@@ -23,6 +24,7 @@
 - **AdminLTE3 Integration**: Responsive and user-friendly UI design.
 - **Task Deadline Alerts**: Notifications for tasks nearing expiry.
 - **Customizable Templates**: Easily modify layout and design.
+- **Send to mail**:
 
 ---
 
@@ -32,6 +34,10 @@
 - **Database**: SQLite (default), with support for PostgreSQL and MySQL
 - **Task Queue**: Celery
 - **Notification System**: Redis
+- **SMTP**: Mail server
+- **Capcha**: Google recapcha v3
+- **Hetzner**: Terraform
+- **Github**: Workflows
 
 ---
 
@@ -78,7 +84,9 @@
    export DJANGO_DB=sqlite
    python manage.py runserver
    ```
+---
 
+## **env**
 First create .env file. Rename .backup_env to .env:
 
 DEBUG=True
@@ -123,11 +131,15 @@ print([app.label for app in apps.get_app_configs()])
 # Create fixturas:
 ```bash
 
+# docker exec -it projekti-web python manage.py dumpdata --natural-foreign --natural-primary --exclude contenttypes --exclude auth.permission --indent 2 > ~/all_dump.json
+
+# docker exec -it projekti-web python manage.py dumpdata auth.user auth.group --natural-foreign --indent 2 > ~/users_groups.json
+
+# docker exec -it projekti-web python manage.py loaddata ~/all_dump.json
+
 python manage.py dumpdata auth.user --indent 2 -o fixturas.json
 
-python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
-
-# And delete from file {
+# Delete from file {
 #     "model": "accounts.profile",
 #     "pk": 39,
 #     "fields": {
@@ -135,18 +147,6 @@ python manage.py dumpdata auth.user accounts projects teams tasks notifications 
 #         ...
 #     }
 # }
-
-python manage.py dumpdata auth.group auth.user projects teams tasks comments \
---indent 2 \
---natural-foreign \
---natural-primary \
---exclude auth.permission \
---exclude contenttypes \
---exclude accounts.profile \
---exclude notifications \
--o fixturas.json
-
-
 
 python manage.py shell -c "from django.contrib.contenttypes.models import ContentType; ContentType.objects.all().delete()"
 ```
@@ -158,6 +158,9 @@ python manage.py loaddata fixturas.json
 
 # IF You use docker-compose localy:
 ```bash
+
+# comment docker-compose.yml Cloudflare section
+
 docker compose down
 docker compose down -v
 docker compose build --no-cache
@@ -191,11 +194,12 @@ docker exec projekti-web ls -l /usr/src/app/
 ```
 
 # Fixturas from docker:
+
 ```bash
 docker exec -it projekti-web /bin/bash
 # or root
 docker exec -u 0 -it projekti-web /bin/bash
-python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
+# python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
 docker cp projekti-web:/usr/src/app/fixturas.json /home/wolf
 ```
 
@@ -240,6 +244,16 @@ docker rm $(docker ps -aq)
 docker volume rm $(docker volume ls -q)
 docker volume prune -f
 docker system prune -a --volumes
+
+# Apturēt visus projekta konteinerus
+docker ps -q | xargs -r docker stop
+docker stop $(docker ps -q)
+# Izdzēst visus konteinerus
+docker ps -aq | xargs -r docker rm
+# IZDZĒST VISUS VOLUMES (Šis izdzēsīs veco Postgres datus ar kļūdaino recipient_id)
+docker volume prune -f
+# Drošībai izdzēst vecos image, lai GitHub Workflow būvē visu no jauna
+docker image prune -a -f
 ```
 
 # Read logs
@@ -247,32 +261,56 @@ docker system prune -a --volumes
 docker logs projekti-web
 docker logs projekti-postgresdb
 ```
-# 1. Izveido tabulu struktūru (šoreiz bez kļūdām par 'recipient_id')
+
+#
+```bash
 docker exec -it projekti-web python manage.py migrate
-# 2. Savāc statiskos failus (lai nav 404/500 kļūdu CSS failiem)
 docker exec -it projekti-web python manage.py collectstatic --noinput
-# 3. Ielādē sākuma datus
-
 docker exec -it projekti-web python manage.py loaddata fixturas.json
+```
 
-# 1. Apturēt visus projekta konteinerus
-docker ps -q | xargs -r docker stop
-docker stop $(docker ps -q)
-# 2. Izdzēst visus konteinerus
-docker ps -aq | xargs -r docker rm
-# 3. IZDZĒST VISUS VOLUMES (Šis izdzēsīs veco Postgres datus ar kļūdaino recipient_id)
-docker volume prune -f
-# 4. Drošībai izdzēst vecos image, lai GitHub Workflow būvē visu no jauna
-docker image prune -a -f
+# Migrate to new server
 
+```bash
+# Dump database from old server :
+docker exec -e PGPASSWORD='YOUR_PASSWORD' DOCKER_NAME pg_dump -U YourUSER YourDatabase > ~/dump_$(date +%Y-%m-%d_%H_%M_%S).sql
 
-
-docker cp /home/wolf/fixturas.json projekti-web:/usr/src/app/
-docker exec -it projekti-web python manage.py loaddata fixturas.json
-docker exec -it projekti-web /bin/bash
-python manage.py createsuperuser
-
-
+# Create fixturas
 python manage.py dumpdata auth.user --indent 2 -o fixturas.json
 
-docker cp projekti-web:/usr/src/app/fixturas.json /home/wolf
+docker exec -it projekti-web python manage.py dumpdata auth.group > ~/groups_and_perms.json
+
+# Groups and Perms
+docker exec -it projekti-web psql -U YourUser -d YourDatabase -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO YourUser; GRANT ALL ON SCHEMA public TO public;"
+
+# Back to database:
+docker exec -i DOCKER_NAME /bin/bash -c "PGPASSWORD='YOUR_PASSWORD' psql --username YourUSER YourDatabase" < ~/dump_$(date +%Y-%m-%d_%H_%M_%S).sql
+
+sudo docker exec -it projekti-web python manage.py migrate
+
+docker exec -i projekti-web python manage.py loaddata - --format=json < ~/groups_and_perms.json
+
+# Copy json from docker
+docker cp DOCKER_NAME:/usr/src/app/fixturas.json /home/wolf
+
+# Copy json to docker
+docker cp ~/fixturas.json DOCKER_NAME:/usr/src/app/
+
+# Login in docker
+docker exec -it DOCKER_NAME /bin/bash
+
+# Load data to docker
+docker exec -it DOCKER_NAME python manage.py loaddata fixturas.json
+
+# Back to database:
+sudo docker exec -i DOCKER_NAME python manage.py loaddata - --format=json < ~/fixturas.json
+
+# Create super user in docker
+python manage.py createsuperuser
+
+# Only one docker build
+docker-compose up -d --no-deps --build projekti-web
+
+# DOCKER_NAME
+DOCKER_NAME = projekti-web 
+```
