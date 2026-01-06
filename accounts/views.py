@@ -12,7 +12,8 @@ from .models import Profile
 # from notifications.models import Notifiction 
 from teams.models import Team
 from .forms import RegisterForm, ProfileUpdateForm
-from comments.models import Comment
+# from comments.models import Comment
+from projects.models import Comment
 from django.db.models import Q
 
 from django.contrib.auth.views import LoginView

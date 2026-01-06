@@ -103,6 +103,54 @@
             {% endif %}
 
             {% for comment in page_obj %}
+            <div class="post" id="comment-{{ comment.id }}">
+                <div class="user-block">
+                    <img class="img-circle img-bordered-sm" src="{{ comment.user.profile.profile_picture_url }}" alt="user image">
+                    <span class="username">
+                        <a href="#">{{ comment.user.profile.full_name }}</a>
+                        
+                        {# Rādām darbību pogas tikai autoram vai adminam #}
+                        {% if comment.user == request.user or request.user.is_superuser %}
+                        <span class="float-right">
+                            <button type="button" class="btn btn-tool" onclick="toggleEdit('{{ comment.id }}')">
+                                <i class="fas fa-pencil-alt text-info"></i>
+                            </button>
+                            
+                            <form action="{% url 'projects:delete-comment' comment.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this comment?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-tool">
+                                    <i class="fas fa-times text-danger"></i>
+                                </button>
+                            </form>
+                        </span>
+                        {% endif %}
+                    </span>
+                    <span class="description">Pievienots: {{ comment.created_at|timesince }} atpakaļ</span>
+                </div>
+
+                <div id="comment-text-{{ comment.id }}">
+                    <p>{{ comment.comment }}</p>
+                </div>
+
+                {% if comment.user == request.user or request.user.is_superuser %}
+                <div id="edit-form-{{ comment.id }}" style="display: none; margin-bottom: 15px;">
+                    <form action="{% url 'projects:edit-comment' comment.id %}" method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <textarea name="comment_text" class="form-control" rows="2">{{ comment.comment }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-success">Saglabāt</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="toggleEdit('{{ comment.id }}')">Atcelt</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <p class="text-muted">Vēl nav neviena komentāra.</p>
+            {% endfor %}
+            
+
+            <!-- {% for comment in page_obj %}
                 <div class="post">
                   <div class="user-block">
                     <img class="img-circle img-bordered-sm" src="{{ comment.user.profile.profile_picture_url }}" alt="user image">
@@ -111,13 +159,13 @@
                     </span>
                     <span class="description">Shared publicly - {{ comment.created_at | timesince}}</span>
                   </div>
-                  <!-- /.user-block -->
+                  
                   <p>
                     {{ comment.comment }}
                   </p>                  
                 </div>
 
-                {% endfor %}               
+                {% endfor %}                -->
             </div>
           </div>
         {% comment %} pagination {% endcomment %}
@@ -189,4 +237,20 @@
   </div>
   <!-- /.modal -->
 
+{% endblock %}
+{% block script %}
+<script>
+function toggleEdit(commentId) {
+    const textDiv = document.getElementById('comment-text-' + commentId);
+    const formDiv = document.getElementById('edit-form-' + commentId);
+
+    if (formDiv.style.display === "none") {
+        textDiv.style.display = "none";
+        formDiv.style.display = "block";
+    } else {
+        textDiv.style.display = "block";
+        formDiv.style.display = "none";
+    }
+}
+</script>
 {% endblock %}

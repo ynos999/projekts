@@ -188,3 +188,30 @@ docker exec -it projekti-web python manage.py shell -c "from django.conf import 
 ```bash
 docker exec -it projekti-web python manage.py shell -c "from django.core.mail import send_mail; send_mail('Testa epasts', 'Sveiki bez izsauksuma zimes', 'sender@gmail.com', ['receiver@gmail.com'], fail_silently=False)"
 ```
+
+# Python shell.
+```bash
+python manage.py shell
+```
+
+# Delete notifications
+```bash
+from django.db import connection
+cursor = connection.cursor()
+cursor.execute("DELETE FROM notifications_notification;")
+connection.commit()
+exit()
+```
+# Makemigrations
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+# Delete all dokers from server.
+```bash
+docker stop $(docker ps -q)
+docker rm $(docker ps -aq)
+docker volume rm $(docker volume ls -q)
+docker system prune -a --volumes
+```
