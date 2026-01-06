@@ -178,3 +178,13 @@ docker cp projekti-web:/usr/src/app/fixturas.json /home/wolf
 ```bash
 docker exec -it projekti-web tail -f /tmp/celery_worker_err.log
 ```
+# Show emails env
+```bash
+docker exec -it projekti-web python manage.py shell -c "from django.conf import settings; print(f'HOST: {settings.EMAIL_HOST}, PORT: {settings.EMAIL_PORT}, TLS: {settings.EMAIL_USE_TLS}, USER: {settings.EMAIL_HOST_USER}')"
+
+docker exec -it projekti-web python manage.py shell -c "from django.conf import settings; print(f'TLS status: {settings.EMAIL_USE_TLS}')"
+```
+
+```bash
+docker exec -it projekti-web python manage.py shell -c "from django.core.mail import send_mail; send_mail('Testa epasts', 'Sveiki bez izsauksuma zimes', 'sender@gmail.com', ['receiver@gmail.com'], fail_silently=False)"
+```
