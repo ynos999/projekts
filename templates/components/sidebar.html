@@ -145,36 +145,29 @@
                   </li>
                 </ul>
               </li>
-              <!-- <li class="nav-item">
+              <!-- Archive -->
+              <li class="nav-item">
                 <a href="#" class="nav-link">
-                  <i class="nav-icon fas fa-tasks"></i>
-                  <p>
-                    Tasks
+                  <i class="nav-icon fas fa-archive"></i> <p>
+                    Archive
                     <i class="fas fa-angle-left right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
                   <li class="nav-item">
-                    <a href="{% url 'tasks:list' %}" class="nav-link {% if request.resolver_match.url_name == 'list' %}active{% endif %}">
+                    <a href="{% url 'projects:archive-projects' %}" class="nav-link {% if request.resolver_match.url_name == 'archive-projects' %}active{% endif %}">
                       <i class="far fa-circle nav-icon text-danger"></i>
-                      <p>All Tasks</p>
+                      <p>Archive Projects</p>
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a href="{% url 'tasks:active-tasks' %}" class="nav-link {% if request.resolver_match.url_name == 'active-tasks' %}active{% endif %}">
-                      <i class="far fa-circle nav-icon text-info"></i>
-                      <p>Active Tasks</p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="{% url 'tasks:create' %}" class="nav-link {% if request.resolver_match.url_name == 'create' %}active{% endif %}">
-                      <i class="far fa-circle nav-icon text-success"></i>
-                      <p>New Task</p>
-                    </a>
+                      <a href="{% url 'tasks:archive-tasks' %}" class="nav-link {% if request.resolver_match.url_name == 'archive-tasks' %}active{% endif %}">
+                          <i class="far fa-circle nav-icon text-warning"></i>
+                          <p>Archive Tasks</p>
+                      </a>
                   </li>
                 </ul>
-              </li> -->
-
+              </li>
         </ul>
       </nav>
       <!-- /.sidebar-menu -->

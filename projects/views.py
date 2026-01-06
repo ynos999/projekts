@@ -1,4 +1,4 @@
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import Http404
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -16,7 +16,8 @@ from datetime import datetime
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.mail import send_mail
 from django.conf import settings
-
+from django.utils import timezone
+# from tasks.models import Task
 
 class ProjectCreateView(CreateView):
     model = Project
@@ -296,95 +297,6 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
 
         # ... pārējā post loģika pielikumiem ...
         return self.get(request, *args, **kwargs)
-    
-# class ProjectDetailView(LoginRequiredMixin, DetailView):
-#     model = Project
-#     template_name = 'projects/project_detail.html'
-    
-#     def get_queryset(self):
-#         # Atļaujam piekļuvi, ja lietotājs ir īpašnieks VAI komandas biedrs
-#         from django.db.models import Q
-#         return Project.objects.filter(
-#             Q(owner=self.request.user) | Q(team__members=self.request.user)
-#         ).distinct()
-
-#     def get_context_data(self, **kwargs):
-#         # latest notifications
-#         context = super(ProjectDetailView, self).get_context_data(**kwargs)
-#         latest_notifications = self.request.user.notifications.unread(
-#             self.request.user)
-#         project = self.get_object()
-#         comments = Comment.objects.filter_by_instance(project)
-#         paginator = Paginator(comments, 5)
-#         page_number = self.request.GET.get('page')
-#         page_obj = paginator.get_page(page_number)
-
-#         context["latest_notifications"] = latest_notifications[:3]
-#         context["notification_count"] = latest_notifications.count()
-#         context["header_text"] = "Project Detail"
-#         context["title"] = project.name
-#         context["my_company"] = "Swifthub"
-#         context["my_company_description"] = """
-#             Swifthub is a robust Project Management System that streamlines task tracking, 
-#             team collaboration, and progress monitoring, ensuring projects stay on track and 
-#             deadlines are met efficiently.
-#         """
-#         context["page_obj"] = page_obj
-#         context["comments_count"] = comments.count()
-#         context["comment_form"] = CommentForm()
-#         context["attachment_form"] = AttachmentForm()
-#         return context
-
-#     def post(self, request, *args, **kwargs):
-#         project = self.get_object()
-#         if request.user not in project.team.members.all():
-#             messages.warning(
-#                 request, "You are not a member of this project and you cannot comment")
-#             return self.get(request, *args, **kwargs)
-
-#         if 'comment_submit' in request.POST:
-#             form = CommentForm(request.POST)
-#             if form.is_valid():
-#                 comment = form.save(commit=False)
-#                 comment.user = request.user
-#                 comment.content_object = project
-#                 comment.save()
-
-#                 # send notification
-#                 actor_username = self.request.user.username
-#                 actor_full_name = self.request.user.profile.full_name
-#                 verb = f'{actor_full_name}, commented on {project.name}'
-
-#                 create_notification(
-#                     actor_username=actor_username,
-#                     verb=verb,
-#                     object_id=project.id,
-#                     content_type_model="project",
-#                     content_type_app_label="projects"
-#                 )
-#                 messages.success(
-#                     request, "Your comment has been added successfully")
-#                 return redirect('projects:project-detail', pk=project.pk)
-#             else:
-#                 messages.warning(request, form.errors.get(
-#                     "comment", ["An unknown error occured."])[0])
-
-#         if 'attachment_submit' in request.POST:
-#             attachment_form = AttachmentForm(request.POST, request.FILES)
-#             if attachment_form.is_valid():
-#                 attachment = attachment_form.save(commit=False)
-#                 attachment.project = project
-#                 attachment.user = request.user
-#                 attachment.save()
-#                 messages.success(
-#                     request, "Your file has been uploaded successfully")
-#                 return redirect('projects:project-detail', pk=project.pk)
-#             else:
-#                 messages.error(
-#                     request, "Error uploading the file, please try again later")
-
-#         return self.get(request, *args, **kwargs)
-
 
 class KanbanBoardView(DetailView):
     model = Project
@@ -416,3 +328,13 @@ class KanbanBoardView(DetailView):
         # context['task_assignment_form'] = TaskUserAssignmentForm()
 
         return context
+
+def archive_projects_list(request):
+    projects = Project.objects.for_user(request.user).filter(
+        due_date__lt=timezone.now().date()
+    )
+    
+    return render(request, 'projects/archive_projects.html', {
+        'projects': projects,
+        'title': 'Archived Projects'
+    })

@@ -9,8 +9,6 @@ from .utils import STATUS_CHOICES, PRIORITY_CHOICES
 from django.contrib.contenttypes.fields import GenericRelation
 from notifications.models import Notification
 
-
-
 class ProjectQueryset(models.QuerySet):
     def active(self):
         return self.filter(active=True)
@@ -27,6 +25,10 @@ class ProjectQueryset(models.QuerySet):
     def for_user(self, user):
         return self.filter(models.Q(owner=user) | models.Q(team__members=user)).distinct()
     
+    def expired(self):
+        # Projekti, kam due_date ir mazāks par šodienu
+        return self.filter(due_date__lt=timezone.now().date())
+    
 
 class ProjectManager(models.Manager):
     def get_queryset(self):
@@ -40,13 +42,9 @@ class ProjectManager(models.Manager):
     
     def for_user(self, user):
         return self.get_queryset().active().upcoming().for_user(user)
-
-
     
-
-    
-    
-  
+    def archive(self):
+        return self.get_queryset().expired()
 
 class Project(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
@@ -107,9 +105,6 @@ class Project(models.Model):
             color = ""
         return color
 
-           
-    
-
     def priority_color(self):
         if self.priority == "Low":
             color = "success"
@@ -136,5 +131,3 @@ class Attachment(models.Model):
 
     def __str__(self):
         return f"Attachment by {self.user.username} on {self.project.name}"
-    
-

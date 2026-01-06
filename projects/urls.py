@@ -21,4 +21,5 @@ urlpatterns = [
     path('<uuid:pk>/update/', ProjectUpdateView.as_view(), name="update"),
     path('<uuid:pk>/kanban-board', KanbanBoardView.as_view(), name="kanban-board"),
     path('my-projects/', views.MyProjectsListView.as_view(), name='my-projects'),
+    path('archive/projects/', views.archive_projects_list, name='archive-projects'),
 ]

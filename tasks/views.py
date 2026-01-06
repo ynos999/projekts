@@ -11,7 +11,7 @@ from django.views.generic import CreateView, ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.views.generic import UpdateView
 from django.views.generic import DeleteView
 from django.db.models import Q, CharField
@@ -19,6 +19,9 @@ from django.db.models.functions import Cast
 from datetime import datetime
 from django.core.mail import send_mail
 from django.conf import settings
+from django.utils import timezone
+from tasks.models import Task
+
 
 @csrf_exempt
 @require_POST
@@ -309,4 +312,15 @@ class TaskUpdateView(LoginRequiredMixin, UpdateView):
         return Task.objects.filter(
             Q(owner=self.request.user) | Q(user_assigned_to=self.request.user)
         )
-        
+    
+def archive_tasks_list(request):
+    # Atlasa uzdevumus tikai no tiem projektiem, kuriem lietotājs ir biedrs vai īpašnieks
+    tasks = Task.objects.filter(
+        project__in=Project.objects.for_user(request.user),
+        due_date__lt=timezone.now().date()
+    ).exclude(status='Completed')
+    
+    return render(request, 'tasks/archive_tasks.html', {
+        'tasks': tasks,
+        'title': 'Archived Tasks'
+    })

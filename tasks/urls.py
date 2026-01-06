@@ -29,5 +29,6 @@ urlpatterns = [
     path('ajax/assignment-form/<uuid:task_id>/', views.get_task_assignment_form, name="assignment-form"),
     path('update-task-status-ajax/<uuid:task_id>/', views.update_task_status_ajax, name='update-task-status-ajax'),
     path('my-active/', views.MyActiveTasksListView.as_view(), name='my-active-tasks'),
+    path('archive/tasks/', views.archive_tasks_list, name='archive-tasks'),
 
 ]
