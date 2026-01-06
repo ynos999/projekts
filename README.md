@@ -122,6 +122,8 @@ print([app.label for app in apps.get_app_configs()])
 
 # Create fixturas:
 ```bash
+python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
+
 python manage.py dumpdata auth.group auth.user projects teams tasks comments \
 --indent 2 \
 --natural-foreign \
@@ -131,6 +133,8 @@ python manage.py dumpdata auth.group auth.user projects teams tasks comments \
 --exclude accounts.profile \
 --exclude notifications \
 -o fixturas.json
+
+
 
 python manage.py shell -c "from django.contrib.contenttypes.models import ContentType; ContentType.objects.all().delete()"
 ```
@@ -226,7 +230,6 @@ docker volume prune -f
 docker system prune -a --volumes
 ```
 
-
 # Read logs
 ```bash
 docker logs projekti-web
@@ -249,3 +252,13 @@ docker ps -aq | xargs -r docker rm
 docker volume prune -f
 # 4. Drošībai izdzēst vecos image, lai GitHub Workflow būvē visu no jauna
 docker image prune -a -f
+
+
+
+docker cp /home/wolf/fixturas.json projekti-web:/usr/src/app/
+docker exec -it projekti-web python manage.py loaddata fixturas.json
+docker exec -it projekti-web /bin/bash
+python manage.py createsuperuser
+
+python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
+docker cp projekti-web:/usr/src/app/fixturas.json /home/wolf
