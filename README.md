@@ -33,7 +33,6 @@
 - **Task Queue**: Celery
 - **Notification System**: Redis
 
-
 ---
 
 ## **Installation**
@@ -44,6 +43,7 @@
 - Virtual environment (recommended)
 
 ---
+# If use localy:
 
    ```
 0. Copy Repo.
@@ -82,7 +82,7 @@
 First create .env file. Rename .backup_env to .env:
 
 DEBUG=True
-ALLOWED_HOSTS=127.0.0.1,localhost,mydimain.com,*
+ALLOWED_HOSTS=127.0.0.1,localhost,mydomain.com,*
 
 RECAPTCHA_PUBLIC_KEY = 'YourKeyHere'
 RECAPTCHA_PRIVATE_KEY = 'YourKeyHere'
@@ -110,7 +110,7 @@ EMAIL_USE_SSL=False
 
 ### **Project Structure**
 
-For dumpdata:
+# For dumpdata:
 ```bash
 python manage.py shell
 # Inside shell:
@@ -120,27 +120,26 @@ print([app.label for app in apps.get_app_configs()])
 ['admin', 'auth', 'contenttypes', 'sessions', 'messages', 'staticfiles', 'tempus_dominus', 'crispy_forms', 'crispy_bootstrap5', 'django_celery_beat', 'phonenumber_field', 'accounts', 'projects', 'tasks', 'notifications', 'teams', 'comments']
 ```
 
-Create fixturas:
+# Create fixturas:
 ```bash
 python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
 python manage.py shell -c "from django.contrib.contenttypes.models import ContentType; ContentType.objects.all().delete()"
 ```
 
-Load fixturas.json:
+# Load fixturas.json:
 ```bash
 python manage.py loaddata fixturas.json
 ```
 
-IF You use docker-compose:
+# IF You use docker-compose localy:
 ```bash
 docker compose down
 docker compose down -v
 docker compose build --no-cache
 docker compose up
 ```
-
+# If You use github worklows add secrets:
 ```
-If You use github worklows add secrets:
           ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
           RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
           RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
@@ -158,23 +157,24 @@ If You use github worklows add secrets:
           FIXTURES_DATA: ${{ secrets.FIXTURES_DATA }}
 ```
 
-```
+# Test
+```bash
 docker exec projekti-web python manage.py shell -c "from django.conf import settings; print(f'DEBUG: {settings.DEBUG}'); print(f'ALLOWED_HOSTS: {settings.ALLOWED_HOSTS}'); print(f'CSRF_ORIGINS: {settings.CSRF_TRUSTED_ORIGINS}')"
-
-
 docker exec projekti-web python manage.py check
-
-
 docker exec projekti-web python manage.py shell -c "from django.conf import settings; print(settings.DEBUG)"
-
-docker exec projekti-web ls -l /usr/src/app/  # Atrodi kur ir logi
+docker exec projekti-web ls -l /usr/src/app/
 ```
 
+# Fixturas from docker:
+```bash
 docker exec -it projekti-web /bin/bash
-Or root
+# or root
 docker exec -u 0 -it projekti-web /bin/bash
-
 python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
-
-
 docker cp projekti-web:/usr/src/app/fixturas.json /home/wolf
+```
+
+# Raed celery_worker_err.log
+```bash
+docker exec -it projekti-web tail -f /tmp/celery_worker_err.log
+```

@@ -6,14 +6,10 @@ services:
     container_name: projekti-postgresdb
     labels:
       - "postgresdb=true"
-    # env_file:
-    #   - .env
     environment:
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
-      # POSTGRES_HOST: postgresdb
-      # POSTGRES_PORT: 5432
     restart: always
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -43,12 +39,18 @@ services:
       DB_PORT: 5432
       RECAPTCHA_PUBLIC_KEY: ${RECAPTCHA_PUBLIC_KEY}
       RECAPTCHA_PRIVATE_KEY: ${RECAPTCHA_PRIVATE_KEY}
+      EMAIL_HOST: "${EMAIL_HOST}"
+      EMAIL_HOST_USER: "${EMAIL_HOST_USER}"
+      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD}"
+      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL}"
+      EMAIL_USE_TLS: True
+      EMAIL_USE_SSL: False
+      EMAIL_PORT: 587
     depends_on:
       - postgresdb
+      - redis
     expose:
       - "8000"
-    # ports:
-    #   - "8000:8000"
     networks:
       - projekti
     volumes:
@@ -91,9 +93,6 @@ services:
     image: redis:7-alpine
     container_name: projekti-redis
     restart: always
-    # environment:
-    #   - REDIS_HOST=redis
-    #   - REDIS_PORT=6379
     expose:
       - "6379"
     networks:
@@ -109,7 +108,6 @@ services:
       - PGPASSWORD=${DB_PASS}
       - DB_USER=${DB_USER}
       - DB_NAME=${DB_NAME}
-      # - DB_HOST=${DB_HOST}
       - DB_HOST=postgresdb
     entrypoint: |
       /bin/sh -c "
