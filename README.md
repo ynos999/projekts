@@ -131,6 +131,14 @@ python manage.py dumpdata auth.group auth.user projects teams tasks notification
 --exclude accounts.profile \
 -o fixturas.json
 
+python manage.py dumpdata auth.user projects teams tasks notifications comments \
+--indent 2 \
+--exclude auth.permission \
+--exclude auth.group \
+--exclude contenttypes \
+--exclude accounts.profile \
+-o fixturas.json
+
 python manage.py shell -c "from django.contrib.contenttypes.models import ContentType; ContentType.objects.all().delete()"
 ```
 
