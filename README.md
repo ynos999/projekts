@@ -122,6 +122,9 @@ print([app.label for app in apps.get_app_configs()])
 
 # Create fixturas:
 ```bash
+
+python manage.py dumpdata auth.user --indent 2 -o fixturas.json
+
 python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
 
 # And delete from file {
@@ -269,5 +272,7 @@ docker exec -it projekti-web python manage.py loaddata fixturas.json
 docker exec -it projekti-web /bin/bash
 python manage.py createsuperuser
 
-python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
+
+python manage.py dumpdata auth.user --indent 2 -o fixturas.json
+
 docker cp projekti-web:/usr/src/app/fixturas.json /home/wolf
