@@ -1,0 +1,87 @@
+name: Deploy Docker Compose
+on:
+  push:
+    paths:
+      - ".github/workflows/deploy-infra.yml"
+      - "docker/**"
+      - "**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Start SSH tunnel to Docker daemon
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+              -i ~/.ssh/id_rsa \
+              -fNL 2375:localhost:2375 \
+              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}
+
+      - name: Create fixtures file
+        run: |
+          cat << 'EOF' > fixturas.json
+          ${{ secrets.FIXTURES_DATA }}
+          EOF
+          # Pārbauda, vai fails tiešām ir izveidots saknes mapē
+          ls -l fixturas.json
+
+      - name: Run Docker Compose
+        # working-directory: ./
+        env:
+          DEBUG: "False"
+          ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+          RECAPTCHA_PUBLIC_KEY: ${{ secrets.RECAPTCHA_PUBLIC_KEY }}
+          RECAPTCHA_PRIVATE_KEY: ${{ secrets.RECAPTCHA_PRIVATE_KEY }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          POSTGRES_PORT: 5432
+          DB_PORT: 5432
+          REDIS_HOST: "redis"
+          REDIS_PORT: 6379
+          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+          EMAIL_USE_TLS: "True"
+          EMAIL_PORT: 587
+          EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+          EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
+          DEFAULT_FROM_EMAIL: ${{ secrets.EMAIL_HOST_USER }}
+          EMAIL_USE_SSL: "False"
+          TEST_TUNNEL_TOKEN: ${{ secrets.TUNNEL_TOKEN }}
+          HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+          DOCKER_HOST: tcp://localhost:2375
+          ENABLE_RECAPTCHA: "True"
+          PRODUCTION: "True"
+
+        run: |
+
+          envsubst < docker-compose.yml > docker-compose.temp.yml
+          # 1. Apturam visu un IZMEĻAM vecos sējumus (tikai šoreiz, ja gribi Reset)
+          # Ja gribi pilnīgu resetu katru reizi (bīstami datiem!), pievieno -v
+          docker compose -f docker-compose.temp.yml down --remove-orphans
+          # 2. Palaižam konteinerus
+          docker compose -f docker-compose.temp.yml up -d --build
+          # 3. Pagaidām, kamēr DB nostartējas (svarīgi!)
+          sleep 10
+          # 4. Izpildām migrācijas (salabos recipient_id kolonnu)
+          docker exec projekti-web python manage.py migrate --noinput
+          # 5. Savācam static failus
+          docker exec projekti-web python manage.py collectstatic --noinput
+          # 6. DZĒŠAM tēlus un tīram vietu
+          docker image prune -a -f
+          rm docker-compose.temp.yml
+
+      - name: Remove .env file
+        run: rm -f .env
