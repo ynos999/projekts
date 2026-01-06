@@ -124,6 +124,15 @@ print([app.label for app in apps.get_app_configs()])
 ```bash
 python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
 
+# And delete from file {
+#     "model": "accounts.profile",
+#     "pk": 39,
+#     "fields": {
+#         "user": 17,
+#         ...
+#     }
+# }
+
 python manage.py dumpdata auth.group auth.user projects teams tasks comments \
 --indent 2 \
 --natural-foreign \
