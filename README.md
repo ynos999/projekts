@@ -122,11 +122,12 @@ print([app.label for app in apps.get_app_configs()])
 
 # Create fixturas:
 ```bash
-python manage.py dumpdata auth.user auth.group projects teams tasks notifications comments \
+python manage.py dumpdata auth.user projects teams tasks notifications comments \
 --indent 2 \
 --natural-foreign \
 --natural-primary \
 --exclude auth.permission \
+--exclude auth.group \
 --exclude contenttypes \
 --exclude accounts.profile \
 -o fixturas.json
