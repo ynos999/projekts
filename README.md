@@ -124,7 +124,7 @@ print([app.label for app in apps.get_app_configs()])
 ```bash
 # python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
 
-python manage.py dumpdata auth.user projects teams tasks notifications comments --indent 4 -o fixturas.json
+python manage.py dumpdata auth.group auth.permission auth.user projects teams tasks notifications comments --indent 4 -o fixturas.json
 
 python manage.py shell -c "from django.contrib.contenttypes.models import ContentType; ContentType.objects.all().delete()"
 ```
@@ -220,15 +220,18 @@ docker volume prune -f
 docker system prune -a --volumes
 ```
 
+
+# Read logs
+```bash
+docker logs projekti-web
+docker logs projekti-postgresdb
+```
 # 1. Izveido tabulu struktūru (šoreiz bez kļūdām par 'recipient_id')
 docker exec -it projekti-web python manage.py migrate
 # 2. Savāc statiskos failus (lai nav 404/500 kļūdu CSS failiem)
 docker exec -it projekti-web python manage.py collectstatic --noinput
 # 3. Ielādē sākuma datus
 docker exec -it projekti-web python manage.py loaddata fixturas.json
-
-docker logs projekti-web
-docker logs projekti-postgresdb
 
 # 1. Apturēt visus projekta konteinerus
 docker ps -q | xargs -r docker stop
@@ -239,5 +242,3 @@ docker ps -aq | xargs -r docker rm
 docker volume prune -f
 # 4. Drošībai izdzēst vecos image, lai GitHub Workflow būvē visu no jauna
 docker image prune -a -f
-
-docker volume rm projekts_postgres_data projekts_media_volume projekts_static_volume
