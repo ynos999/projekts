@@ -122,7 +122,10 @@ print([app.label for app in apps.get_app_configs()])
 
 # Create fixturas:
 ```bash
-python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
+# python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
+
+python manage.py dumpdata auth.user projects teams tasks notifications comments --indent 4 -o fixturas.json
+
 python manage.py shell -c "from django.contrib.contenttypes.models import ContentType; ContentType.objects.all().delete()"
 ```
 
@@ -213,7 +216,6 @@ python manage.py migrate
 docker stop $(docker ps -q)
 docker rm $(docker ps -aq)
 docker volume rm $(docker volume ls -q)
-docker volume rm projekti_postgres_data
 docker volume prune -f
 docker system prune -a --volumes
 ```
