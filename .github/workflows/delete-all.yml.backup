@@ -66,21 +66,13 @@ jobs:
           PRODUCTION: "True"
 
         run: |
-
           envsubst < docker-compose.yml > docker-compose.temp.yml
-          # 1. Apturam visu un IZMEĻAM vecos sējumus (tikai šoreiz, ja gribi Reset)
-          # Ja gribi pilnīgu resetu katru reizi (bīstami datiem!), pievieno -v
           docker compose -f docker-compose.temp.yml down --remove-orphans
-          # 2. Palaižam konteinerus
           docker compose -f docker-compose.temp.yml up -d --build
-          # 3. Pagaidām, kamēr DB nostartējas (svarīgi!)
-          sleep 10
-          # 4. Izpildām migrācijas (salabos recipient_id kolonnu)
+          sleep 15
           docker exec projekti-web python manage.py migrate --noinput
-          # 5. Savācam static failus
-          docker exec projekti-web python manage.py collectstatic --noinput
-          # 6. DZĒŠAM tēlus un tīram vietu
-          docker image prune -a -f
+          docker exec projekti-web python manage.py loaddata fixturas.json || echo "Dati jau eksistē"
+          docker image prune -f
           rm docker-compose.temp.yml
 
       - name: Remove .env file

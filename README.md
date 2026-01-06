@@ -213,5 +213,31 @@ python manage.py migrate
 docker stop $(docker ps -q)
 docker rm $(docker ps -aq)
 docker volume rm $(docker volume ls -q)
+docker volume rm projekti_postgres_data
+docker volume prune -f
 docker system prune -a --volumes
 ```
+
+# 1. Izveido tabulu struktūru (šoreiz bez kļūdām par 'recipient_id')
+docker exec -it projekti-web python manage.py migrate
+# 2. Savāc statiskos failus (lai nav 404/500 kļūdu CSS failiem)
+docker exec -it projekti-web python manage.py collectstatic --noinput
+# 3. Ielādē sākuma datus
+docker exec -it projekti-web python manage.py loaddata fixturas.json
+
+docker logs projekti-web
+docker logs projekti-postgresdb
+
+# 1. Apturēt visus projekta konteinerus
+docker ps -q | xargs -r docker stop
+
+docker stop $(docker ps -q)
+
+# 2. Izdzēst visus konteinerus
+docker ps -aq | xargs -r docker rm
+# 3. IZDZĒST VISUS VOLUMES (Šis izdzēsīs veco Postgres datus ar kļūdaino recipient_id)
+docker volume prune -f
+# 4. Drošībai izdzēst vecos image, lai GitHub Workflow būvē visu no jauna
+docker image prune -a -f
+
+docker volume rm projekts_postgres_data projekts_media_volume projekts_static_volume
