@@ -230,9 +230,7 @@ docker logs projekti-postgresdb
 
 # 1. Apturēt visus projekta konteinerus
 docker ps -q | xargs -r docker stop
-
 docker stop $(docker ps -q)
-
 # 2. Izdzēst visus konteinerus
 docker ps -aq | xargs -r docker rm
 # 3. IZDZĒST VISUS VOLUMES (Šis izdzēsīs veco Postgres datus ar kļūdaino recipient_id)
