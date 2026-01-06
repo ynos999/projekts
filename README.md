@@ -122,12 +122,13 @@ print([app.label for app in apps.get_app_configs()])
 
 # Create fixturas:
 ```bash
-python manage.py dumpdata auth.group auth.user projects teams tasks \
+python manage.py dumpdata auth.group auth.user projects teams tasks notifications comments \
 --indent 2 \
+--natural-foreign \
+--natural-primary \
 --exclude auth.permission \
 --exclude contenttypes \
 --exclude accounts.profile \
---exclude notifications \
 -o fixturas.json
 
 python manage.py shell -c "from django.contrib.contenttypes.models import ContentType; ContentType.objects.all().delete()"
@@ -235,6 +236,7 @@ docker exec -it projekti-web python manage.py migrate
 # 2. Savāc statiskos failus (lai nav 404/500 kļūdu CSS failiem)
 docker exec -it projekti-web python manage.py collectstatic --noinput
 # 3. Ielādē sākuma datus
+
 docker exec -it projekti-web python manage.py loaddata fixturas.json
 
 # 1. Apturēt visus projekta konteinerus
