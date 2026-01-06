@@ -126,6 +126,16 @@ def get_task(request, task_id):
 
 def update_task(request, task_id):
     task = get_object_or_404(Task, id=task_id)
+    
+    # Pārbaudām abas lomas
+    is_authorized = (
+        task.owner == request.user or 
+        task.user_assigned_to == request.user or 
+        request.user.is_superuser
+    )
+
+    if not is_authorized:
+        return JsonResponse({'success': False, 'error': 'Tev nav tiesību labot šo uzdevumu.'}, status=403)
 
     if request.method == "POST":
         form = TaskUpdateForm(request.POST, instance=task)
@@ -262,7 +272,7 @@ class MyActiveTasksListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = "Mani aktīvie uzdevumi"
+        context['title'] = "My active tasks"
         return context
 
 class TaskCreateView(LoginRequiredMixin, CreateView):
@@ -295,7 +305,9 @@ class TaskDeleteView(LoginRequiredMixin, DeleteView):
         # ATĻAUJAM adminam dzēst jebko
         if self.request.user.is_superuser:
             return Task.objects.all()
-        return Task.objects.filter(Q(owner=self.request.user) | Q(user_assigned_to=self.request.user))
+        # return Task.objects.filter(Q(owner=self.request.user) | Q(user_assigned_to=self.request.user))
+        return Task.objects.filter(owner=self.request.user)
+    
 
 class TaskUpdateView(LoginRequiredMixin, UpdateView):
     model = Task
