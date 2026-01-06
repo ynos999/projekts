@@ -46,7 +46,7 @@ class TaskManager(models.Manager):
 class Task(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks')
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, db_index=True)
     user_assigned_to = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -56,13 +56,13 @@ class Task(models.Model):
     )
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
     description = models.TextField(blank=True, null=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Backlog")
-    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="Medium")
-    start_date = models.DateField(null=True, blank=True)
-    due_date = models.DateField(null=True, blank=True)
-    active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Backlog", db_index=True)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="Medium", db_index=True)
+    start_date = models.DateField(null=True, blank=True, db_index=True)
+    due_date = models.DateField(null=True, blank=True, db_index=True)
+    active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
     objects = TaskManager()
 
@@ -70,8 +70,19 @@ class Task(models.Model):
     def __str__(self):
         return self.name
 
+        
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            # Paātrina filtrēšanu Kanban dēlim un pārskatiem
+            models.Index(fields=['status', 'priority']),
+            # Paātrina noklusējuma kārtošanu (ordering)
+            models.Index(fields=['-created_at']),
+            # Paātrina uzdevumu atlasi konkrēta projekta ietvaros
+            models.Index(fields=['project', 'status']),
+            # Papildus: Ja bieži meklē pēc izpildes termiņa
+            models.Index(fields=['due_date']),
+        ]
 
     
     def days_until_due(self):
@@ -102,9 +113,6 @@ class Task(models.Model):
             color = ""
         return color
 
-           
-    
-
     def priority_color(self):
         if self.priority == "Low":
             color = "success"
@@ -114,6 +122,3 @@ class Task(models.Model):
             color = "danger"
         return color
     
-  
-    
-

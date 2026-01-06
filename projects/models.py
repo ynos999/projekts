@@ -8,6 +8,8 @@ from .utils import STATUS_CHOICES, PRIORITY_CHOICES
 
 from django.contrib.contenttypes.fields import GenericRelation
 from notifications.models import Notification
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 
 class ProjectQueryset(models.QuerySet):
     def active(self):
@@ -50,21 +52,21 @@ class Project(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     team = models.ForeignKey(Team, related_name="projects", on_delete=models.CASCADE)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, db_index=True)
     description = models.TextField(blank=True, null=True)
-    client_company = models.CharField(max_length=100, blank=True, null=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="To Do")
-    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="Medium")
+    client_company = models.CharField(max_length=100, blank=True, null=True, db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="To Do", db_index=True)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="Medium", db_index=True)
     
     # budget details
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     amount_spent = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, blank=True, null=True)
     estimated_duration = models.IntegerField(blank=True, null=True, help_text="Estimated duration in days")
-    start_date = models.DateField()
-    due_date = models.DateField()
-    active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    start_date = models.DateField(db_index=True)
+    due_date = models.DateField(db_index=True)
+    active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
     objects = ProjectManager()
     notifications = GenericRelation(Notification)
@@ -72,9 +74,17 @@ class Project(models.Model):
 
     def __str__(self):
         return self.name
-
+        
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            # Paātrina noklusējuma kārtošanu
+            models.Index(fields=['-created_at']),
+            # Paātrina projektu atlasi konkrētai komandai pēc to statusa
+            models.Index(fields=['team', 'status']),
+            # Paātrina klientu atskaites/filtrēšanu
+            models.Index(fields=['client_company']),
+        ]
 
     
     def days_until_due(self):
@@ -131,3 +141,26 @@ class Attachment(models.Model):
 
     def __str__(self):
         return f"Attachment by {self.user.username} on {self.project.name}"
+
+class CommentManager(models.Manager):
+    def filter_by_instance(self, instance):
+        content_type = ContentType.objects.get_for_model(instance)  
+        return self.filter(content_type=content_type, object_id=instance.id)
+
+class Comment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.CharField(max_length=255)
+    content_object = GenericForeignKey('content_type', 'object_id')
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = CommentManager()
+
+    def __str__(self):
+        return f'Comment by {self.user} {self.content_object}'
+    
+    class Meta:
+        ordering = ['-created_at']
+
+

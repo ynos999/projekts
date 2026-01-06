@@ -39,7 +39,7 @@ def create_notification(actor_username, verb, object_id, content_type_model, con
 
         for recipient in recipients:
             Notification.objects.create(
-                receipient=recipient,
+                recipient=recipient,
                 actor=actor,
                 verb=verb,
                 content_type=content_type,

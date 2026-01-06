@@ -24,15 +24,6 @@ class ProjectForm(forms.ModelForm):
         label=False
     )
 
-    # owner = forms.ModelChoiceField(
-    #     queryset= User.objects.filter(is_active=True),
-    #     widget=forms.Select(
-    #         attrs={'class': "form-control"}
-    #     ),
-    #     label=False,
-    #     required=True
-    # )
-
     team = forms.ModelChoiceField(
         queryset=Team.objects.all(),
         widget=forms.Select(
@@ -43,8 +34,11 @@ class ProjectForm(forms.ModelForm):
     )
 
     client_company = forms.CharField(
-        label=False,
-        required=True
+        widget=forms.TextInput(
+            attrs={'placeholder': "Client company name (optional)"}
+        ),
+        required=False,  # ŠIS IR SVARĪGĀKAIS
+        label=False      # Ja izmanto savu labelu HTML pusē
     )
 
     status = forms.ChoiceField(

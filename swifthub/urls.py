@@ -19,6 +19,9 @@ from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
 
+from django.views.generic.base import RedirectView
+from django.contrib.staticfiles.storage import staticfiles_storage
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", include('accounts.urls', namespace='accounts')),
@@ -27,12 +30,10 @@ urlpatterns = [
     path("tasks/", include('tasks.urls', namespace='tasks')),
     path("teams/", include('teams.urls', namespace='teams')),
     
-
     # authetication
     path('accounts/', include('django.contrib.auth.urls')),
+    path('favicon.ico', RedirectView.as_view(url=staticfiles_storage.url('img/favicon.ico'))),
     
-
-
 ]
 
 if settings.DEBUG:

@@ -122,7 +122,32 @@ print([app.label for app in apps.get_app_configs()])
 
 # Create fixturas:
 ```bash
+
+python manage.py dumpdata auth.user --indent 2 -o fixturas.json
+
 python manage.py dumpdata auth.user accounts projects teams tasks notifications comments --indent 4 -o fixturas.json
+
+# And delete from file {
+#     "model": "accounts.profile",
+#     "pk": 39,
+#     "fields": {
+#         "user": 17,
+#         ...
+#     }
+# }
+
+python manage.py dumpdata auth.group auth.user projects teams tasks comments \
+--indent 2 \
+--natural-foreign \
+--natural-primary \
+--exclude auth.permission \
+--exclude contenttypes \
+--exclude accounts.profile \
+--exclude notifications \
+-o fixturas.json
+
+
+
 python manage.py shell -c "from django.contrib.contenttypes.models import ContentType; ContentType.objects.all().delete()"
 ```
 
@@ -188,3 +213,66 @@ docker exec -it projekti-web python manage.py shell -c "from django.conf import 
 ```bash
 docker exec -it projekti-web python manage.py shell -c "from django.core.mail import send_mail; send_mail('Testa epasts', 'Sveiki bez izsauksuma zimes', 'sender@gmail.com', ['receiver@gmail.com'], fail_silently=False)"
 ```
+
+# Python shell.
+```bash
+python manage.py shell
+```
+
+# Delete notifications
+```bash
+from django.db import connection
+cursor = connection.cursor()
+cursor.execute("DELETE FROM notifications_notification;")
+connection.commit()
+exit()
+```
+# Makemigrations
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+# Delete all dokers from server.
+```bash
+docker stop $(docker ps -q)
+docker rm $(docker ps -aq)
+docker volume rm $(docker volume ls -q)
+docker volume prune -f
+docker system prune -a --volumes
+```
+
+# Read logs
+```bash
+docker logs projekti-web
+docker logs projekti-postgresdb
+```
+# 1. Izveido tabulu struktūru (šoreiz bez kļūdām par 'recipient_id')
+docker exec -it projekti-web python manage.py migrate
+# 2. Savāc statiskos failus (lai nav 404/500 kļūdu CSS failiem)
+docker exec -it projekti-web python manage.py collectstatic --noinput
+# 3. Ielādē sākuma datus
+
+docker exec -it projekti-web python manage.py loaddata fixturas.json
+
+# 1. Apturēt visus projekta konteinerus
+docker ps -q | xargs -r docker stop
+docker stop $(docker ps -q)
+# 2. Izdzēst visus konteinerus
+docker ps -aq | xargs -r docker rm
+# 3. IZDZĒST VISUS VOLUMES (Šis izdzēsīs veco Postgres datus ar kļūdaino recipient_id)
+docker volume prune -f
+# 4. Drošībai izdzēst vecos image, lai GitHub Workflow būvē visu no jauna
+docker image prune -a -f
+
+
+
+docker cp /home/wolf/fixturas.json projekti-web:/usr/src/app/
+docker exec -it projekti-web python manage.py loaddata fixturas.json
+docker exec -it projekti-web /bin/bash
+python manage.py createsuperuser
+
+
+python manage.py dumpdata auth.user --indent 2 -o fixturas.json
+
+docker cp projekti-web:/usr/src/app/fixturas.json /home/wolf

@@ -6,7 +6,8 @@ from django.core.paginator import Paginator
 from django.views.generic import CreateView, ListView, DetailView, DeleteView, UpdateView
 from .models import Project
 from .forms import ProjectForm, AttachmentForm
-from comments.models import Comment
+# from comments.models import Comment
+from .models import Comment
 from comments.forms import CommentForm
 from tasks.forms import TaskUpdateForm
 from notifications.tasks import create_notification
@@ -17,7 +18,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
-# from tasks.models import Task
+from django.http import HttpResponseForbidden
+from .models import Comment  
+
 
 class ProjectCreateView(CreateView):
     model = Project
@@ -292,7 +295,7 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
                     content_type_model="project",
                     content_type_app_label="projects"
                 )
-                messages.success(request, "Komentārs pievienots.")
+                messages.success(request, "Comment added.")
                 return redirect('projects:project-detail', pk=project.pk)
 
         # ... pārējā post loģika pielikumiem ...
@@ -338,3 +341,33 @@ def archive_projects_list(request):
         'projects': projects,
         'title': 'Archived Projects'
     })
+    
+def edit_comment(request, pk):
+    comment_obj = get_object_or_404(Comment, pk=pk)
+    
+    # Drošība: Tikai autors vai admins drīkst labot
+    if comment_obj.user != request.user and not request.user.is_superuser:
+        return HttpResponseForbidden("Tev nav tiesību labot šo komentāru.")
+
+    if request.method == "POST":
+        new_text = request.POST.get('comment_text')
+        if new_text:
+            comment_obj.comment = new_text
+            comment_obj.save()
+            messages.success(request, "Comment successfully edited.")
+        
+        # Atgriež lietotāju uz to pašu lapu
+        return redirect(request.META.get('HTTP_REFERER', '/'))
+
+def delete_comment(request, pk):
+    comment_obj = get_object_or_404(Comment, pk=pk)
+    
+    # Drošība: Tikai autors vai admins drīkst dzēst
+    if comment_obj.user != request.user and not request.user.is_superuser:
+        return HttpResponseForbidden("Tev nav tiesību dzēst šo komentāru.")
+
+    if request.method == "POST":
+        comment_obj.delete()
+        messages.success(request, "The comment has been deleted.")
+    
+    return redirect(request.META.get('HTTP_REFERER', '/'))

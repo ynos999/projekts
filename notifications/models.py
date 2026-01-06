@@ -2,33 +2,24 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
-
-
-# class NotificationManager(models.Manager):
-#     # def for_user(self, user):
-#     #     return self.filter(receipient=user)
-    
-#     def unread(self, user):
-#         return self.filter(read=False).exclude(actor=user)
-    
-#     def read(self):
-#         return self.filter(read=True).exclude(actor=user)
-    
+  
 class NotificationManager(models.Manager):
     def unread(self, user):
         # Filtrējam paziņojumus, kur saņēmējs ir konkrētais lietotājs un tie nav izlasīti
-        return self.filter(receipient=user, read=False)
+        return self.filter(recipient=user, read=False)
 
 
 class Notification(models.Model):
-    receipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
     actor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="actions")
     verb = models.CharField(max_length=255)
+    
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.CharField(max_length=255)
+    object_id = models.CharField(max_length=255, db_index=True)
     content_object = GenericForeignKey('content_type', 'object_id')
-    created_at = models.DateTimeField(auto_now_add=True)
-    read = models.BooleanField(default=False)
+    
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    read = models.BooleanField(default=False, db_index=True) # Pievienojam index šeit
 
     objects = NotificationManager()
 
@@ -37,6 +28,11 @@ class Notification(models.Model):
     
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            # SVARĪGI: Lauku nosaukumiem jāsakrīt ar augstāk definētajiem (recipient, read)
+            models.Index(fields=['recipient', 'read']),
+            models.Index(fields=['-created_at']),
+        ]
 
     @property
     def notification_time_formatted(self):
@@ -45,4 +41,3 @@ class Notification(models.Model):
     def mark_as_read(self):
         self.read = True
         self.save()
-    
