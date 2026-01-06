@@ -122,14 +122,14 @@ print([app.label for app in apps.get_app_configs()])
 
 # Create fixturas:
 ```bash
-python manage.py dumpdata auth.user projects teams tasks notifications comments \
+python manage.py dumpdata auth.group auth.user projects teams tasks comments \
 --indent 2 \
 --natural-foreign \
 --natural-primary \
 --exclude auth.permission \
---exclude auth.group \
 --exclude contenttypes \
 --exclude accounts.profile \
+--exclude notifications \
 -o fixturas.json
 
 python manage.py shell -c "from django.contrib.contenttypes.models import ContentType; ContentType.objects.all().delete()"
