@@ -24,8 +24,8 @@ class TeamCreateView(CreateView):
 
         context["latest_notifications"] = latest_notifications[:3]
         context["notification_count"] = latest_notifications.count()
-        context["header_text"] = "Team Add"
-        context["title"] = "Team Add"
+        context["header_text"] = "Add Team"
+        context["title"] = "Add Team"
         context["button_text"] = "Create Team"
         context["card_title"] = "Create Teams"
         return context
@@ -75,7 +75,7 @@ class TeamListView(ListView):
 
         context["latest_notifications"] = latest_notifications[:3]
         context["notification_count"] = latest_notifications.count()
-        context["header_text"] = "Team List"
+        # context["header_text"] = "Team List"
         context["title"] = "Team List"
         return context
     

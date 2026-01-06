@@ -107,8 +107,8 @@ class MyProjectsListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = "Mani projekti"
-        context['header_text'] = "Mani projekti"
+        context['title'] = "My projects"
+        # context['header_text'] = "My projects"
         return context
 
 def get_context_data(self, **kwargs):
